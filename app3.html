@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>千鳥の鬼レンチャン 予想＆ランキング</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1p:wght@900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:#030712;color:#f3f4f6;font-family:'Noto Sans JP',sans-serif;margin:0}
+.tf{font-family:'M PLUS Rounded 1p','Noto Sans JP',sans-serif}
+.red{background:linear-gradient(135deg,#b91c1c,#7f1d1d)}
+input,select{background:#1f2937;border:1px solid #374151;border-radius:.5rem;padding:.4rem .6rem;color:#fff;width:100%;font-size:16px}
+.card{background:#111827;border:1px solid #1f2937;border-radius:.75rem;padding:1rem}
+.btn{border-radius:.5rem;font-weight:700;padding:.5rem 1rem;cursor:pointer;color:#fff}
+</style>
+</head>
+<body>
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <header class="red text-center mb-6 p-6 rounded-2xl border-4 border-yellow-500 shadow-2xl">
+    <h1 class="tf text-2xl md:text-5xl text-yellow-300">🔥 千鳥の鬼レンチャン 予想アプリ 🔥</h1>
+    <p class="text-sm mt-2 font-bold">サビだけカラオケ みんなで予想＆ランキング対決</p>
+  </header>
+  <nav class="flex flex-wrap justify-center gap-2 mb-6 bg-gray-900 p-2 rounded-xl border border-gray-800">
+    <button type="button" id="nav-predict" data-a="tab" data-t="predict" class="btn text-sm">🎯 予想入力</button>
+    <button type="button" id="nav-results" data-a="tab" data-t="results" class="btn text-sm">📊 予想</button>
+    <button type="button" id="nav-profile" data-a="tab" data-t="profile" class="btn text-sm">👤 プロフィール</button>
+    <button type="button" id="nav-past" data-a="tab" data-t="past" class="btn text-sm">📚 過去の回</button>
+    <button type="button" id="nav-admin" data-a="tab" data-t="admin" class="btn text-sm">⚙️ 管理人</button>
+  </nav>
+  <div id="sync" class="text-center text-xs text-gray-500 mb-3">接続中…</div>
+  <main>
+    <section id="tab-predict"></section>
+    <section id="tab-results" class="hidden"></section>
+    <section id="tab-profile" class="hidden"></section>
+    <section id="tab-past" class="hidden"></section>
+    <section id="tab-admin" class="hidden"></section>
+  </main>
+</div>
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-8 bg-yellow-400 text-gray-950 font-bold px-5 py-3 rounded-xl shadow-2xl z-50"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getFirestore, doc, collection, setDoc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD3-5S_UnEVf1ODfhJ9Eh4E7IO1f8cL9H8",
+  authDomain: "onirenprediction.firebaseapp.com",
+  projectId: "onirenprediction",
+  storageBucket: "onirenprediction.firebasestorage.app",
+  messagingSenderId: "192591353649",
+  appId: "1:192591353649:web:779e8fada64bc001c90210"
+};
+const db = getFirestore(initializeApp(firebaseConfig));
+const pid = n => 'p_' + encodeURIComponent(n);
+// ===== 設定 =====
+const PW = 'kawagon916';          // 管理人パスワード
+const PT_R = 5, PT_R1 = 3, PT_S = 5; // レンチャン数ぴったり / ±1 / 選曲1つ正解
+const KEY = 'oni_renchan_v2';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LV = m => m === 'hard' ? ['5','6','7','8','9','10-1','10-2','10-3','10-4','10-5'] : ['1','2','3','4','5','6','7','8','9','10'];
+const LB = l => l.startsWith('10-') ? '10(' + l.slice(3) + ')' : 'Lv.' + l;
+const nm = s => String(s || '').normalize('NFKC').replace(/\s/g, '').toLowerCase();
+const mkData = () => ({
+  me: { name: '鬼レンチャン好き' },
+  ch: ['A','B','C','D'].map(x => ({ name: '挑戦者' + x, mode: 'normal', real: 0, songs: {} })),
+  pred: {}, prof: {}, decided: false
+});
+
+let L = null; // この端末だけに保存: 名前と入力中の下書き
+try { L = JSON.parse(localStorage.getItem(KEY)); } catch (e) { L = null; }
+if (!L || !L.me) L = { me: { name: '鬼レンチャン好き' }, draft: null };
+const S = mkData();
+S.me = L.me; S.past = []; S.rid = 0;
+let P = {};
+let admin = false, vm = 'ch', vc = 0, vp = '', po = -1, pm = 'ch', pc = 0, pp = '';
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ me: S.me, draft: L.draft })); } catch (e) {} }
+const tmo = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 8000))]);
+function fail(e) {
+  toast(e && e.code === 'timeout'
+    ? '保存がサーバーに届いていません。Firestoreの作成とルールを確認してください'
+    : '保存できませんでした（' + ((e && e.code) || '通信') + '）');
+}
+async function pushRound() {
+  try { await tmo(setDoc(doc(db, 'app', 'round'), { ch: S.ch, decided: S.decided, rid: S.rid, ts: Date.now() })); return true; }
+  catch (e) { fail(e); return false; }
+}
+let tt;
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.remove('hidden');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 4500);
+}
+function mine() {
+  const n = S.me.name;
+  if (!L.draft || L.draft.n !== n || L.draft.rid !== S.rid) L.draft = { n, rid: S.rid, d: S.pred[n] ? JSON.parse(JSON.stringify(S.pred[n])) : [] };
+  S.ch.forEach((_, i) => { if (!L.draft.d[i]) L.draft.d[i] = { r: 5, s: {}, c: '' }; });
+  return L.draft.d;
+}
+function sc(n) {
+  const p = S.pred[n] || []; let r = 0, s = 0;
+  S.ch.forEach((c, i) => {
+    const d = p[i]; if (!d) return;
+    const df = Math.abs(d.r - c.real);
+    r += df === 0 ? PT_R : df === 1 ? PT_R1 : 0;
+    LV(c.mode).forEach(l => { const a = nm(c.songs[l]); if (a && a === nm(d.s[l])) s += PT_S; });
+  });
+  return { r, s, t: r + s };
+}
+
+// ===== 描画 =====
+function rPredict() {
+  if (!drawn) { $('tab-predict').innerHTML = `<p class='text-center text-gray-400 py-10'>読み込み中…</p>`; return; }
+  const p = mine();
+  $('tab-predict').innerHTML =
+    `<div class="card flex items-center justify-between mb-4"><span class="text-sm text-gray-400">現在の予想者: <b class="text-yellow-400">${esc(S.me.name)}</b></span><button type="button" class="btn bg-gray-800 text-yellow-400 text-xs" data-a="tab" data-t="profile">名前・プロフィール変更</button></div>` +
+    S.ch.map((c, i) => {
+      const d = p[i];
+      return `<div class="card mb-4 space-y-3"><h3 class="font-bold text-yellow-400">🎤 ${esc(c.name)} <span class="text-xs text-gray-400">(${c.mode === 'hard' ? '鬼ハード' : 'ノーマル'})</span></h3>
+      <div><label class="text-sm text-gray-400">予想レンチャン数</label><select data-f="r" data-c="${i}">${[...Array(11).keys()].map(k => `<option value="${k}" ${d.r == k ? 'selected' : ''}>${k} レンチャン</option>`).join('')}</select></div>
+      <div class="grid md:grid-cols-2 gap-2">${LV(c.mode).map(l => `<div class="flex items-center gap-2"><span class="w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-800 rounded py-1">${LB(l)}</span><input data-f="s" data-c="${i}" data-l="${l}" value="${esc(d.s[l])}" placeholder="曲名を予想"></div>`).join('')}</div>
+      <input data-f="c" data-c="${i}" value="${esc(d.c)}" placeholder="ひとこと（例：この曲でいけるはず！）"></div>`;
+    }).join('') +
+    `<button type="button" class="btn w-full bg-green-600 py-3 text-lg" data-a="savep">💾 予想を保存する</button>`;
+}
+
+function totals() {
+  const t = {};
+  const add = (n, x) => { const o = t[n] || (t[n] = { n, pt: 0, rounds: 0, wins: 0 }); o.pt += x.t; o.rounds++; return o; };
+  S.past.forEach(p => p.rank.forEach((x, i) => { const o = add(x.n, x); if (i === 0) o.wins++; }));
+  if (S.decided) Object.keys(S.pred).forEach(n => add(n, sc(n)));
+  return Object.values(t).sort((a, b) => b.pt - a.pt);
+}
+function totalCard() {
+  const tt = totals();
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>👑 総合ランキング（通算）</h2><p class='text-xs text-gray-400 mb-3'>これまでの全部の回のポイントの合計です${S.decided ? '（今回の分も含む）' : ''}</p>` +
+    (tt.length ? tt.map((x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${i + 1}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.pt}pt <span class='text-xs text-gray-400'>(${x.rounds}回参加／優勝${x.wins}回)</span></span></div>`).join('') : `<p class='text-sm text-gray-400'>まだデータがありません</p>`) + `</div>`;
+}
+
+function rResults() {
+  const names = Object.keys(S.pred);
+  if (!S.pred[vp]) vp = names[0] || '';
+  const rk = names.map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t);
+  let h = totalCard() + `<div class="card mb-4"><h2 class="font-bold text-yellow-400 mb-3">🏆 今回の回のランキング</h2>` +
+    (S.decided
+      ? (rk.length ? rk.map((x, i) => `<div class="flex justify-between bg-gray-800 rounded p-2 mb-2"><span>${i + 1}位 ${esc(x.n)}</span><span class="text-yellow-400 font-bold">${x.t}pt <span class="text-xs text-gray-400">(数${x.r}＋曲${x.s})</span></span></div>`).join('') : '<p class="text-sm text-gray-400">予想がまだありません</p>')
+      : '<p class="text-sm text-gray-400">放送後に管理人が結果を入力するとここに表示されます</p>') + `</div>`;
+
+  const cell = (n, i) => {
+    const c = S.ch[i], d = S.pred[n][i] || { r: 0, s: {}, c: '' };
+    return `<div class="bg-gray-800 rounded p-3 mb-2 text-sm"><div class="flex justify-between"><b>${esc(vm === 'ch' ? n : c.name)}</b><span class="text-yellow-400">${d.r}レンチャン${S.decided ? `（正解${c.real}）` : ''}</span></div>
+      ${d.c ? `<p class="text-gray-400">💬 ${esc(d.c)}</p>` : ''}
+      <div class="grid md:grid-cols-2 gap-x-3 mt-1">${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = S.decided && nm(c.songs[l]) && nm(c.songs[l]) === nm(d.s[l]); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`;
+  };
+
+  h += `<div class="card"><h2 class="font-bold text-yellow-400 mb-3">👥 みんなの予想</h2>
+    <div class="flex gap-2 mb-3"><button type="button" class="btn ${vm === 'ch' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="ch">挑戦者別</button><button type="button" class="btn ${vm === 'pp' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="pp">予想者別</button></div>`;
+  if (!names.length) h += '<p class="text-sm text-gray-400">まだ予想がありません</p>';
+  else if (vm === 'ch') {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto">${S.ch.map((c, i) => `<button type="button" class="btn shrink-0 ${vc === i ? 'bg-red-600' : 'bg-gray-800'}" data-a="vc" data-i="${i}">${esc(c.name)}</button>`).join('')}</div>` + names.map(n => cell(n, vc)).join('');
+  } else {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto">${names.map(n => `<button type="button" class="btn shrink-0 ${vp === n ? 'bg-red-600' : 'bg-gray-800'}" data-a="vp" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div>` + S.ch.map((c, i) => cell(vp, i)).join('');
+  }
+  $('tab-results').innerHTML = h + '</div>';
+}
+
+function rProfile() {
+  const pr = S.prof[S.me.name] || {};
+  $('tab-profile').innerHTML =
+    `<div class="card mb-4 space-y-3"><h2 class="font-bold text-yellow-400">👤 あなたのプロフィール</h2>
+    <div><label class="text-sm text-gray-400">名前（参加者名）</label><input id="pn" value="${esc(S.me.name)}" placeholder="例：鬼レンチャン好き"></div>
+    <div><label class="text-sm text-gray-400">ひとこと自己紹介</label><input id="pb" value="${esc(pr.bio)}" placeholder="例：今回は全問正解するぞ！"></div>
+    <div><label class="text-sm text-gray-400">推し挑戦者</label><input id="po" value="${esc(pr.oshi)}" placeholder="例：挑戦者Aくん"></div>
+    <button type="button" class="btn w-full bg-red-600" data-a="savepf">プロフィールを保存して予想へ進む</button></div>
+    <div class="card"><h2 class="font-bold text-yellow-400 mb-3">📜 参加者プロフィール一覧</h2><div class="grid md:grid-cols-2 gap-3">` +
+    (Object.keys(S.prof).map(n => `<div class="bg-gray-800 rounded p-3 text-sm"><b class="text-yellow-400">${esc(n)}</b><p>${esc(S.prof[n].bio) || '（未入力）'}</p><p class="text-gray-400">推し: ${esc(S.prof[n].oshi) || '—'}</p></div>`).join('') || '<p class="text-sm text-gray-400">まだプロフィールがありません</p>') + `</div></div>` + myPastHtml();
+}
+
+function rAdmin() {
+  const el = $('tab-admin');
+  if (!admin) {
+    el.innerHTML = `<div class="card text-center space-y-3"><h2 class="font-bold text-red-400">🔒 管理人専用ページ</h2><p class="text-sm text-gray-400">表示するにはパスワードが必要です。</p><div class="max-w-xs mx-auto space-y-3"><input type="password" id="pw" class="text-center" placeholder="パスワードを入力"><button type="button" class="btn w-full bg-red-600" data-a="login">認証する</button></div></div>`;
+    return;
+  }
+  el.innerHTML =
+    `<div class="card mb-4"><div class="flex justify-between mb-3"><h2 class="font-bold text-red-400">⚙️ 挑戦者の登録（${S.ch.length}人）</h2><button type="button" class="btn bg-gray-800 text-xs" data-a="logout">🔒 ログアウト</button></div>` +
+    S.ch.map((c, i) => `<div class="flex gap-2 mb-2"><input id="an${i}" value="${esc(c.name)}"><select id="am${i}" style="width:8rem"><option value="normal" ${c.mode === 'normal' ? 'selected' : ''}>ノーマル</option><option value="hard" ${c.mode === 'hard' ? 'selected' : ''}>鬼ハード</option></select></div>`).join('') +
+    `<div class="flex gap-2 items-center"><button type="button" class="btn bg-gray-700 text-xl px-4" data-a="rmch">－</button><button type="button" class="btn bg-gray-700 text-xl px-4" data-a="addch">＋</button><button type="button" class="btn bg-red-600" data-a="savech">挑戦者情報を保存</button></div></div>
+    <div class="card space-y-4"><h2 class="font-bold text-red-400">📺 放送結果の入力 ＆ 採点</h2>` +
+    S.ch.map((c, i) => `<div class="bg-gray-800 rounded p-3 space-y-2"><b class="text-yellow-400">${esc(c.name)}</b>
+      <select id="ar${i}">${[...Array(11).keys()].map(k => `<option value="${k}" ${c.real == k ? 'selected' : ''}>実際: ${k} レンチャン</option>`).join('')}</select>
+      <div class="grid md:grid-cols-2 gap-2">${LV(c.mode).map(l => `<div class="flex items-center gap-2"><span class="w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-900 rounded py-1">${LB(l)}</span><input id="as${i}_${l}" value="${esc(c.songs[l])}" placeholder="実際の曲名"></div>`).join('')}</div></div>`).join('') +
+    `<button type="button" class="btn w-full bg-yellow-600 text-gray-950 py-3 text-lg" style="color:#030712" data-a="calc">🎯 結果を決定 ＆ スコア集計！</button></div>
+    <div class="card mt-4"><button type="button" class="btn w-full bg-gray-800" data-a="reset">📚 今回の回を過去の回に保存して、新しい回を始める</button></div>`;
+}
+
+function myPastHtml() {
+  const n = S.me.name;
+  const rows = S.past.filter(p => p.pred[n]).reverse();
+  return `<div class='card mt-4'><h2 class='font-bold text-yellow-400 mb-3'>📖 ${esc(n)} の過去の予想</h2>` +
+    (rows.length ? rows.map(p => {
+      const k = p.rank.findIndex(x => x.n === n), m = p.rank[k] || { t: 0, r: 0, s: 0 };
+      return `<details class='bg-gray-800 rounded p-3 mb-2 text-sm'><summary class='cursor-pointer'><b class='text-yellow-400'>${esc(p.date)}</b> ${k + 1}位/${p.rank.length}人 ${m.t}pt <span class='text-xs text-gray-400'>(数${m.r}＋曲${m.s})</span></summary>` +
+        p.ch.map((c, i) => { const d = p.pred[n][i] || { r: 0, s: {}, c: '' }; return `<div class='mt-2'><b>${esc(c.name)}</b> 予想${d.r} / 正解${c.real}${d.c ? `<p class='text-gray-400'>💬 ${esc(d.c)}</p>` : ``}<div class='grid md:grid-cols-2 gap-x-3'>${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = nm(c.songs[l]) && nm(c.songs[l]) === nm(d.s[l]); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`; }).join('') + `</details>`;
+    }).join('') : `<p class='text-sm text-gray-400'>まだ過去の回の予想はありません</p>`) + `</div>`;
+}
+
+function rPast() {
+  const el = $('tab-past');
+  const rkRow = (x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${i + 1}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.t}pt <span class='text-xs text-gray-400'>(数${x.r}＋曲${x.s})</span></span></div>`;
+  if (po >= 0 && S.past[po]) {
+    const p = S.past[po], names = Object.keys(p.pred);
+    if (!p.pred[pp]) pp = names[0] || '';
+    const cell = (n, i) => {
+      const c = p.ch[i], d = p.pred[n][i] || { r: 0, s: {}, c: '' };
+      return `<div class='bg-gray-800 rounded p-3 mb-2 text-sm'><div class='flex justify-between'><b>${esc(pm === 'ch' ? n : c.name)}</b><span class='text-yellow-400'>${d.r}レンチャン（正解${c.real}）</span></div>${d.c ? `<p class='text-gray-400'>💬 ${esc(d.c)}</p>` : ``}<div class='grid md:grid-cols-2 gap-x-3 mt-1'>${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = nm(c.songs[l]) && nm(c.songs[l]) === nm(d.s[l]); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`;
+    };
+    let h = `<button type='button' class='btn bg-gray-800 mb-3' data-a='pback'>← 過去の回の一覧へ</button>` +
+      `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>🏆 ${esc(p.date)} の回 ランキング</h2><p class='text-xs text-gray-400 mb-3'>この回だけの点数です</p>` + (p.rank.length ? p.rank.map(rkRow).join('') : `<p class='text-sm text-gray-400'>予想者なし</p>`) + `</div>` +
+      `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-3'>📺 この回の結果</h2>` + p.ch.map(c => `<div class='bg-gray-800 rounded p-3 mb-2 text-sm'><b class='text-yellow-400'>${esc(c.name)}</b> ${c.real}レンチャン<div class='grid md:grid-cols-2 gap-x-3 mt-1 text-gray-300'>${LV(c.mode).filter(l => c.songs[l]).map(l => `<div>${LB(l)} ${esc(c.songs[l])}</div>`).join('')}</div></div>`).join('') + `</div>`;
+    h += `<div class='card'><h2 class='font-bold text-yellow-400 mb-3'>👥 この回のみんなの予想</h2><div class='flex gap-2 mb-3'><button type='button' class='btn ${pm === 'ch' ? 'bg-red-600' : 'bg-gray-800'}' data-a='pm' data-v='ch'>挑戦者別</button><button type='button' class='btn ${pm === 'pp' ? 'bg-red-600' : 'bg-gray-800'}' data-a='pm' data-v='pp'>予想者別</button></div>`;
+    if (!names.length) h += `<p class='text-sm text-gray-400'>予想はありません</p>`;
+    else if (pm === 'ch') h += `<div class='flex gap-2 mb-3 overflow-x-auto'>${p.ch.map((c, i) => `<button type='button' class='btn shrink-0 ${pc === i ? 'bg-red-600' : 'bg-gray-800'}' data-a='pc' data-i='${i}'>${esc(c.name)}</button>`).join('')}</div>` + names.map(n => cell(n, pc)).join('');
+    else h += `<div class='flex gap-2 mb-3 overflow-x-auto'>${names.map(n => `<button type='button' class='btn shrink-0 ${pp === n ? 'bg-red-600' : 'bg-gray-800'}' data-a='pq' data-n='${esc(n)}'>${esc(n)}</button>`).join('')}</div>` + p.ch.map((c, i) => cell(pp, i)).join('');
+    el.innerHTML = h + `</div>`;
+    return;
+  }
+  el.innerHTML = totalCard() + `<div class='card'><h2 class='font-bold text-yellow-400 mb-1'>📚 過去の回</h2><p class='text-xs text-gray-400 mb-3'>回をタップすると、その回のランキングとみんなの予想が見られます</p>` +
+    (S.past.length ? S.past.map((p, i) => ({ p, i })).reverse().map(o => `<button type='button' data-a='po' data-i='${o.i}' class='block w-full text-left text-gray-100 bg-gray-800 rounded p-3 mb-3 text-sm'><b class='text-yellow-400'>${esc(o.p.date)}</b><div class='text-gray-400'>${o.p.ch.map(c => esc(c.name) + ' ' + c.real + 'レンチャン').join(' ／ ')}</div><div>${o.p.rank[0] ? '👑 ' + esc(o.p.rank[0].n) + ' ' + o.p.rank[0].t + 'pt' : '予想者なし'}（${o.p.rank.length}人）</div></button>`).join('') : `<p class='text-sm text-gray-400'>まだ保存された回はありません</p>`) + `</div>`;
+}
+function readAdmin() {
+  S.ch.forEach((c, i) => {
+    const n = $('an' + i), m = $('am' + i), r = $('ar' + i), old = c.mode;
+    if (n) c.name = n.value.trim() || c.name;
+    if (r) c.real = +r.value;
+    if (m) c.mode = m.value;
+    if (c.mode === old) LV(c.mode).forEach(l => { const e = $('as' + i + '_' + l); if (e) c.songs[l] = e.value.trim(); });
+  });
+}
+const R = { predict: rPredict, results: rResults, profile: rProfile, past: rPast, admin: rAdmin };
+let tabNow = 'predict';
+function show(t) {
+  tabNow = t;
+  Object.keys(R).forEach(x => {
+    $('tab-' + x).classList.toggle('hidden', x !== t);
+    $('nav-' + x).className = 'btn text-sm ' + (x === t ? 'bg-red-600 shadow' : 'bg-gray-800 text-gray-300');
+  });
+  R[t]();
+}
+
+// ===== 操作（クリックは全部ここで受ける） =====
+const A = {
+  tab: b => show(b.dataset.t),
+  savep: async () => {
+    try {
+      await tmo(setDoc(doc(db, 'players', pid(S.me.name)), { name: S.me.name, pred: mine(), rid: S.rid, ts: Date.now() }, { merge: true }));
+      save(); toast('予想を保存しました！');
+    } catch (e) { fail(e); }
+  },
+  savepf: async () => {
+    const old = S.me.name, n = $('pn').value.trim().slice(0, 30) || '鬼レンチャン好き';
+    const data = { name: n, bio: $('pb').value.trim().slice(0, 100), oshi: $('po').value.trim().slice(0, 50), ts: Date.now() };
+    const jobs = [];
+    if (old !== n && P[pid(old)]) {
+      const o = P[pid(old)];
+      if (!P[pid(n)] && o.pred) { data.pred = o.pred; data.rid = o.rid || 0; }
+      jobs.push(deleteDoc(doc(db, 'players', pid(old))));
+    }
+    jobs.push(setDoc(doc(db, 'players', pid(n)), data, { merge: true }));
+    S.me.name = n; if (L.draft) L.draft.n = n; save();
+    show('predict');
+    try { await tmo(Promise.all(jobs)); toast('プロフィールを保存しました！'); } catch (e) { fail(e); }
+  },
+  login: () => { if ($('pw').value === PW) { admin = true; rAdmin(); } else toast('パスワードが違います！'); },
+  logout: () => { admin = false; rAdmin(); },
+  addch: async () => {
+    if (S.ch.length >= 10) return toast('挑戦者は最大10人までです');
+    readAdmin();
+    S.ch.push({ name: '挑戦者' + String.fromCharCode(65 + S.ch.length), mode: 'normal', real: 0, songs: {} });
+    rAdmin(); await pushRound();
+  },
+  rmch: async () => {
+    if (S.ch.length <= 1) return toast('挑戦者は最低1人必要です');
+    readAdmin(); S.ch.pop();
+    rAdmin(); await pushRound();
+  },
+  savech: async () => {
+    S.ch.forEach((c, i) => { c.name = $('an' + i).value.trim() || c.name; c.mode = $('am' + i).value; });
+    if (await pushRound()) { rAdmin(); toast('挑戦者情報を保存しました'); }
+  },
+  calc: async () => {
+    S.ch.forEach((c, i) => {
+      c.real = +$('ar' + i).value; c.songs = {};
+      LV(c.mode).forEach(l => { c.songs[l] = $('as' + i + '_' + l).value.trim(); });
+    });
+    S.decided = true;
+    if (await pushRound()) toast('採点しました！「📊 予想」でランキングを確認');
+  },
+  reset: async b => {
+    if (!b.dataset.arm) {
+      b.dataset.arm = 1;
+      b.textContent = S.decided ? 'もう一度押すと過去の回に保存して新しい回を始めます' : 'もう一度押すと全消去します（未採点なので保存されません）';
+      return;
+    }
+    try {
+      const sv = S.decided;
+      if (sv) await addDoc(collection(db, 'past'), {
+        date: new Date().toLocaleDateString('ja-JP'), ts: Date.now(), ch: S.ch,
+        players: Object.keys(S.pred).map(n => ({ n, d: S.pred[n] })),
+        rank: Object.keys(S.pred).map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t)
+      });
+      S.ch.forEach(c => { c.real = 0; c.songs = {}; });
+      S.decided = false; S.rid += 1;
+      if (await pushRound()) { rAdmin(); toast(sv ? '過去の回に保存して、新しい回を始めました' : 'リセットしました'); }
+    } catch (e) { toast('保存できませんでした（' + ((e && e.code) || '通信') + '）'); }
+  },
+  vm: b => { vm = b.dataset.v; rResults(); },
+  vc: b => { vc = +b.dataset.i; rResults(); },
+  vp: b => { vp = b.dataset.n; rResults(); },
+  po: b => { po = +b.dataset.i; pp = ''; pc = 0; rPast(); window.scrollTo(0, 0); },
+  pback: () => { po = -1; rPast(); },
+  pm: b => { pm = b.dataset.v; rPast(); },
+  pc: b => { pc = +b.dataset.i; rPast(); },
+  pq: b => { pp = b.dataset.n; rPast(); }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b && A[b.dataset.a]) A[b.dataset.a](b);
+});
+document.addEventListener('input', e => {
+  const t = e.target, f = t.dataset.f; if (!f) return;
+  const d = mine()[+t.dataset.c];
+  if (f === 's') d.s[t.dataset.l] = t.value;
+  if (f === 'c') d.c = t.value;
+  save();
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.f === 'r') { mine()[+t.dataset.c].r = +t.value; save(); }
+});
+
+// ===== Firestore（全員で共有） =====
+let okRound = false, okPlayers = false, drawn = false;
+function rebuild() {
+  S.pred = {}; S.prof = {};
+  Object.values(P).forEach(p => {
+    if (p.pred && (p.rid || 0) === S.rid) S.pred[p.name] = p.pred;
+    if (p.bio || p.oshi || p.pred) S.prof[p.name] = { bio: p.bio || '', oshi: p.oshi || '' };
+  });
+}
+function refresh(src) {
+  if (!(okRound && okPlayers)) return;
+  if (!drawn) { drawn = true; R[tabNow](); return; }
+  if (tabNow === 'predict') { if (src === 'round') rPredict(); }
+  else if (tabNow !== 'admin') {
+    const f = document.activeElement;
+    if (tabNow === 'profile' && f && f.tagName === 'INPUT' && f.closest('#tab-profile')) return;
+    R[tabNow]();
+  }
+}
+const errFn = e => { $('tab-predict').innerHTML = `<p class='text-center text-red-400 py-10'>読み込めませんでした（${esc((e && e.code) || '')}）。Firestoreのルールと設定を確認してください。</p>`; };
+let lastKey = null, online = false;
+setTimeout(() => { if (!online) { $('sync').textContent = '⚠️ サーバーに接続できていません（Firestoreの作成・ルールを確認）'; $('sync').className = 'text-center text-xs text-red-400 mb-3'; } }, 7000);
+onSnapshot(doc(db, 'app', 'round'), { includeMetadataChanges: true }, s => {
+  if (!s.metadata.fromCache) { online = true; $('sync').textContent = '☁️ 全員と同期中'; $('sync').className = 'text-center text-xs text-green-400 mb-3'; }
+  const d = s.data(), key = JSON.stringify(d || null);
+  if (okRound && key === lastKey) return;
+  lastKey = key;
+  if (d) { S.ch = d.ch; S.decided = !!d.decided; S.rid = d.rid || 0; }
+  okRound = true; rebuild(); refresh('round');
+}, errFn);
+onSnapshot(collection(db, 'players'), qs => {
+  P = {}; qs.forEach(x => { P[x.id] = x.data(); });
+  okPlayers = true; rebuild(); refresh('players');
+}, errFn);
+onSnapshot(collection(db, 'past'), qs => {
+  S.past = qs.docs.map(x => x.data()).sort((a, b) => (a.ts || 0) - (b.ts || 0)).map(p => ({
+    date: p.date, ch: p.ch, rank: p.rank || [],
+    pred: Object.fromEntries((p.players || []).map(x => [x.n, x.d]))
+  }));
+  refresh('past');
+}, errFn);
+
+show('predict');
+</script>
+</body>
+</html>
