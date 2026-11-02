@@ -47,7 +47,6 @@ input,select{background:#1f2937;border:1px solid #374151;border-radius:.5rem;pad
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getFirestore, doc, collection, setDoc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3-5S_UnEVf1ODfhJ9Eh4E7IO1f8cL9H8",
@@ -58,12 +57,8 @@ const firebaseConfig = {
   appId: "1:192591353649:web:779e8fada64bc001c90210"
 };
 
-const appP = initializeApp(firebaseConfig);
-const db = getFirestore(appP);
-const authP = getAuth(appP);
-let myUid = null, authErr = '';
-const authReady = new Promise(res => onAuthStateChanged(authP, u => { if (u) { myUid = u.uid; res(u); } }));
-signInAnonymously(authP).catch(e => { authErr = (e && e.code) || 'auth'; });
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const ADMIN_PASS_HASH = "d516248b13997e33dc3309a6ee3edef698ed1895a0248a3068f05ed81c0bc782";
 
@@ -72,6 +67,7 @@ async function sha256(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+const pid = n => 'p_' + encodeURIComponent(n);
 const PT_R = 5, PT_R1 = 3, PT_S = 5, PT_W = 5, PT_T = 1, PT_TM = 1;
 const KEY = 'oni_renchan_v2';
 
@@ -98,10 +94,9 @@ let admin = false, vm = 'ch', vc = 0, vp = '', po = -1, pm = 'ch', pc = 0, pp = 
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ me: S.me, draft: L.draft })); } catch (e) {} }
 const tmo = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 8000))]);
 function fail(e) {
-  if (authErr && (!e || e.code === 'timeout' || e.code === 'permission-denied')) { toast('ログインの設定が未完了です。管理人に連絡してください'); return; }
   toast(e && e.code === 'timeout'
     ? '保存がサーバーに届いていません。通信を確認してください'
-    : e && e.code === 'permission-denied' ? '保存できませんでした（締切後、または権限がありません）'
+    : e && e.code === 'permission-denied' ? '保存できませんでした（権限エラー）'
     : '保存できませんでした（' + ((e && e.code) || '通信') + '）');
 }
 async function pushRound() {
@@ -279,4 +274,8 @@ function rProfile() {
   const pr = S.prof[S.me.name] || {};
   $('tab-profile').innerHTML =
     `<div class="card mb-4 space-y-3"><h2 class="font-bold text-yellow-400">👤 あなたのプロフィール</h2>
-    <div><label class="text-sm text-gray-400">名前（参加者名・<b class="text-red-300">必須</b>）</label><input id="pn" valu
+    <div><label class="text-sm text-gray-400">名前（参加者名・<b class="text-red-300">必須</b>）</label><input id="pn" value="${esc(S.me.set ? S.me.name : '')}" placeholder="例：鬼レンチャン好き"></div>
+    <div><label class="text-sm text-gray-400">ひとこと自己紹介</label><input id="pb" value="${esc(pr.bio)}" placeholder="例：今回は全問正解するぞ！"></div>
+    <div><label class="text-sm text-gray-400">推し挑戦者</label><input id="po" value="${esc(pr.oshi)}" placeholder="例：挑戦者Aくん"></div>
+    <button type="button" class="btn w-full bg-red-600" data-a="savepf">プロフィールを保存して予想へ進む</button></div>
+    <div class="card"><h2 clas
