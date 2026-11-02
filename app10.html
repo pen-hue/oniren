@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>千鳥の鬼レンチャン 予想＆ランキング</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1p:wght@900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:#030712;color:#f3f4f6;font-family:'Noto Sans JP',sans-serif;margin:0}
+.tf{font-family:'M PLUS Rounded 1p','Noto Sans JP',sans-serif}
+.red{background:linear-gradient(135deg,#b91c1c,#7f1d1d)}
+input,select{background:#1f2937;border:1px solid #374151;border-radius:.5rem;padding:.4rem .6rem;color:#fff;width:100%;font-size:16px}
+.card{background:#111827;border:1px solid #1f2937;border-radius:.75rem;padding:1rem}
+.btn{border-radius:.5rem;font-weight:700;padding:.5rem 1rem;cursor:pointer;color:#fff}
+</style>
+</head>
+<body>
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <header class="red text-center mb-6 p-6 rounded-2xl border-4 border-yellow-500 shadow-2xl">
+    <h1 class="tf text-2xl md:text-5xl text-yellow-300">🔥 千鳥の鬼レンチャン 予想アプリ 🔥</h1>
+    <p class="text-sm mt-2 font-bold">サビだけカラオケ みんなで予想＆ランキング対決</p>
+  </header>
+  <nav class="flex flex-wrap justify-center gap-2 mb-6 bg-gray-900 p-2 rounded-xl border border-gray-800">
+    <button type="button" id="nav-predict" data-a="tab" data-t="predict" class="btn text-sm">🎯 予想入力</button>
+    <button type="button" id="nav-results" data-a="tab" data-t="results" class="btn text-sm">📊 予想</button>
+    <button type="button" id="nav-ranking" data-a="tab" data-t="ranking" class="btn text-sm">🏆 ランキング</button>
+    <button type="button" id="nav-profile" data-a="tab" data-t="profile" class="btn text-sm">👤 プロフィール</button>
+    <button type="button" id="nav-past" data-a="tab" data-t="past" class="btn text-sm">📚 過去の回</button>
+    <button type="button" id="nav-admin" data-a="tab" data-t="admin" class="btn text-sm">⚙️ 管理人</button>
+    <button type="button" id="nav-share" data-a="share" class="btn text-sm bg-gray-700">🔗 共有</button>
+  </nav>
+  <div id="sync" class="text-center text-xs text-gray-500 mb-3">接続中…</div>
+  <main>
+    <section id="tab-predict"></section>
+    <section id="tab-results" class="hidden"></section>
+    <section id="tab-ranking" class="hidden"></section>
+    <section id="tab-profile" class="hidden"></section>
+    <section id="tab-past" class="hidden"></section>
+    <section id="tab-admin" class="hidden"></section>
+  </main>
+</div>
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-8 bg-yellow-400 text-gray-950 font-bold px-5 py-3 rounded-xl shadow-2xl z-50"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getFirestore, doc, collection, setDoc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD3-5S_UnEVf1ODfhJ9Eh4E7IO1f8cL9H8",
+  authDomain: "onirenprediction.firebaseapp.com",
+  projectId: "onirenprediction",
+  storageBucket: "onirenprediction.firebasestorage.app",
+  messagingSenderId: "192591353649",
+  appId: "1:192591353649:web:779e8fada64bc001c90210"
+};
+
+const appP = initializeApp(firebaseConfig);
+const db = getFirestore(appP);
+const authP = getAuth(appP);
+let myUid = null, authErr = '';
+const authReady = new Promise(res => onAuthStateChanged(authP, u => { if (u) { myUid = u.uid; res(u); } }));
+signInAnonymously(authP).catch(e => { authErr = (e && e.code) || 'auth'; });
+
+const ADMIN_PASS_HASH = "d516248b13997e33dc3309a6ee3edef698ed1895a0248a3068f05ed81c0bc782";
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const PT_R = 5, PT_R1 = 3, PT_S = 5, PT_W = 5, PT_T = 1, PT_TM = 1;
+const KEY = 'oni_renchan_v2';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LV = m => m === 'hard' ? ['5','6','7','8','9','10-1','10-2','10-3','10-4','10-5'] : ['1','2','3','4','5','6','7','8','9','10'];
+const LB = l => l.startsWith('10-') ? '10(' + l.slice(3) + ')' : 'Lv.' + l;
+const nm = s => String(s || '').normalize('NFKC').replace(/\s/g, '').toLowerCase();
+const mkData = () => ({
+  me: { name: '鬼レンチャン好き' },
+  ch: ['A','B','C','D'].map((x, i) => ({ name: '挑戦者' + x, mode: 'normal', team: '', real: 0, songs: {} })),
+  pred: {}, prof: {}, decided: false
+});
+
+let L = null;
+try { L = JSON.parse(localStorage.getItem(KEY)); } catch (e) { L = null; }
+if (!L || !L.me) L = { me: { name: '', set: false }, draft: null };
+const S = mkData();
+S.me = L.me; S.past = []; S.rid = 0; S.title = ''; S.airDate = ''; S.win = ''; S.deadline = ''; S.deadlineMs = 0; S.ok = [];
+let P = {};
+let pe = -1;
+let admin = false, vm = 'ch', vc = 0, vp = '', po = -1, pm = 'ch', pc = 0, pp = '';
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ me: S.me, draft: L.draft })); } catch (e) {} }
+const tmo = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 8000))]);
+function fail(e) {
+  if (authErr && (!e || e.code === 'timeout' || e.code === 'permission-denied')) { toast('ログインの設定が未完了です。管理人に連絡してください'); return; }
+  toast(e && e.code === 'timeout'
+    ? '保存がサーバーに届いていません。通信を確認してください'
+    : e && e.code === 'permission-denied' ? '保存できませんでした（締切後、または権限がありません）'
+    : '保存できませんでした（' + ((e && e.code) || '通信') + '）');
+}
+async function pushRound() {
+  try { await tmo(setDoc(doc(db, 'app', 'round'), { ch: S.ch, decided: S.decided, rid: S.rid, title: S.title, airDate: S.airDate, win: S.win || '', deadline: S.deadline || '', deadlineMs: S.deadlineMs || 0, ok: S.ok || [], ts: Date.now() })); return true; }
+  catch (e) { fail(e); return false; }
+}
+let tt;
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.remove('hidden');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 4500);
+}
+function mine() {
+  const n = S.me.name;
+  if (!L.draft || L.draft.n !== n || L.draft.rid !== S.rid) L.draft = { n, rid: S.rid, d: S.pred[n] ? JSON.parse(JSON.stringify(S.pred[n])) : [] };
+  S.ch.forEach((_, i) => { if (!L.draft.d[i]) L.draft.d[i] = { r: 5, s: {}, c: '' }; });
+  return L.draft.d;
+}
+const TEAMS = { chi: '千鳥軍', kam: 'かまいたち軍', none: '所属未定' };
+const WINL = { chi: '千鳥軍', kam: 'かまいたち軍', draw: '引き分け' };
+const ORD = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const teamOf = (c, i) => c.team === undefined ? (i < 2 ? 'chi' : 'kam') : c.team;
+const hasName = () => !!(S.me.set && S.me.name);
+const unkN = c => (String(c.name).match(/[？?]{2}/g) || []).length;
+const dn = c => { let k = 0; const ws = c.ws || []; return String(c.name).replace(/[？?]{2}/g, m => ws[k++] || m); };
+const na = x => nm(x).replace(/(さん|くん|君|ちゃん|氏|様)$/, '');
+const winOf = pr => (pr && pr[0] && pr[0].win) || '';
+function groups(ch) {
+  const g = { chi: [], kam: [], none: [] };
+  ch.forEach((c, i) => g[teamOf(c, i) || 'none'].push({ c, i }));
+  return ['chi', 'kam', 'none'].map(k => ({ key: k, label: TEAMS[k], items: g[k].map((x, j) => ({ ...x, k: j })) })).filter(x => x.items.length);
+}
+const slot = it => (ORD[it.k] || (it.k + 1)) + '人目';
+const todayStr = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); };
+const fmtDate = d => { const m = String(d || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return m ? m[1] + '/' + (+m[2]) + '/' + (+m[3]) : (d || ''); };
+const roundTitle = () => S.title || ('第' + (S.rid + 1) + '回');
+const locked = () => !!(S.decided || (S.deadlineMs && Date.now() >= S.deadlineMs));
+const fmtDl = d => String(d || '').replace('T', ' ').replace(/-/g, '/');
+const toIn = d => { const m = String(d || '').match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/); return m ? m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3]).padStart(2, '0') : ''; };
+const withRk = (arr, k = 't') => arr.map((x, i, a) => { x.rk = (i > 0 && a[i - 1][k] === x[k]) ? a[i - 1].rk : i + 1; return x; });
+const songOk = (c, i, l, g, ok) => { const a = nm(c.songs[l]), x = nm(g); return !!a && !!x && (a === x || ok.has(i + ':' + l + ':' + x)); };
+function winOfRound(ch, win) {
+  if (win) return win;
+  let a = 0, b = 0;
+  ch.forEach((c, i) => { const t = teamOf(c, i); if (t === 'chi') a += c.real; else if (t === 'kam') b += c.real; });
+  return a > b ? 'chi' : b > a ? 'kam' : 'draw';
+}
+const actualWin = () => winOfRound(S.ch, S.win);
+function whoPtsR(c, d, i, ok) {
+  const act = (c.ws || []).map(na).filter(Boolean), gs = ((d && d.ws) || []).map(na), used = [];
+  let pts = 0;
+  act.forEach(a => { const j = gs.findIndex((x, idx) => !used.includes(idx) && x === a); if (j >= 0) { used.push(j); pts += PT_W; } });
+  gs.forEach((x, idx) => { if (x && !used.includes(idx) && used.length < unkN(c) && ok.has('w:' + i + ':' + x)) { used.push(idx); pts += PT_W; } });
+  return pts;
+}
+const matchWho = (c, x) => !!na(x) && (c.ws || []).some(a => na(a) === na(x));
+const tmLine = (c, d) => d && d.tm ? `<p class='text-gray-300'>🚩 所属の予想: ${TEAMS[d.tm]}${c.team && c.team === d.tm ? ' ✅' : ''}</p>` : '';
+const whoLine = (c, d) => tmLine(c, d) + (unkN(c) ? `<p class='text-gray-300'>👤 ？？の予想: ${((d && d.ws) || []).filter(Boolean).map(x => esc(x) + (matchWho(c, x) ? ' ✅' : '')).join('、') || '（なし）'}</p>` : '');
+const winCard = (pred, actual) => {
+  const names = Object.keys(pred), pick = k => names.filter(n => winOf(pred[n]) === k);
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-2'>🏁 どっちの軍が勝つ？の予想（正解${PT_T}pt）</h2>` +
+    (actual ? `<p class='text-sm mb-2'>結果: <b class='text-yellow-400'>${WINL[actual]}</b></p>` : '') +
+    ['chi', 'kam', 'draw'].map(k => `<div class='text-sm mb-1'><b>${WINL[k]}</b> ${pick(k).length}人${pick(k).length ? '：' + pick(k).map(esc).join('、') : ''}${actual === k && pick(k).length ? ' ✅' : ''}</div>`).join('') + `</div>`;
+};
+function scR(ch, pred, win, decided, ok, n) {
+  const p = pred[n] || []; let r = 0, s = 0, w = 0, m = 0;
+  ch.forEach((c, i) => {
+    const d = p[i]; if (!d) return;
+    const df = Math.abs(d.r - c.real);
+    r += df === 0 ? PT_R : df === 1 ? PT_R1 : 0;
+    LV(c.mode).forEach(l => { if (songOk(c, i, l, d.s[l], ok)) s += PT_S; });
+    if (unkN(c)) w += whoPtsR(c, d, i, ok);
+    if (c.team && d.tm && d.tm === c.team) m += PT_TM;
+  });
+  if (decided && winOf(p) && winOf(p) === winOfRound(ch, win)) m += PT_T;
+  return { r, s, w, m, t: r + s + w + m };
+}
+const sc = n => scR(S.ch, S.pred, S.win, S.decided, new Set(S.ok), n);
+
+// ===== 描画 =====
+function rPredict0() {
+  if (!drawn) { $('tab-predict').innerHTML = `<p class='text-center text-gray-400 py-10'>読み込み中…</p>`; return; }
+  if (!hasName()) {
+    $('tab-predict').innerHTML = `<div class='card text-center space-y-3'><p>予想する前に、プロフィールで<b class='text-yellow-400'>名前</b>を入力してください（必須）。</p><button type='button' class='btn bg-red-600' data-a='tab' data-t='profile'>プロフィールへ</button></div>`;
+    return;
+  }
+  const p = mine();
+  const card = it => {
+    const c = it.c, i = it.i, d = p[i], k = unkN(c);
+    return `<div class='card mb-4 space-y-3'><h3 class='font-bold text-yellow-400'>🎤 ${esc(dn(c, i))} <span class='text-xs text-gray-400'>(${c.mode === 'hard' ? '鬼ハード' : 'ノーマル'})</span></h3>` +
+      (k ? `<div class='space-y-2'><label class='text-sm text-gray-400'>${k > 1 ? '？？の2人は誰？（順不同・1人当たるごとに' : '？？は誰？（当たると'}${PT_W}pt・敬称略）</label>${[...Array(k).keys()].map(j => `<input data-f='ws' data-c='${i}' data-k='${j}' value='${esc((d.ws || [])[j])}' placeholder='${k > 1 ? '予想' + (j + 1) : '予想する人の名前'}（敬称略）'>`).join('')}</div>` : '') +
+      (teamOf(c, i) === '' ? `<div><label class='text-sm text-gray-400'>どっちの軍？（当たると${PT_TM}pt）</label><select data-f='tm' data-c='${i}'>${[['', '選んでください'], ['chi', '千鳥軍'], ['kam', 'かまいたち軍']].map(([v, l]) => `<option value='${v}' ${(d.tm || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : '') +
+      `<div><label class='text-sm text-gray-400'>予想レンチャン数</label><select data-f='r' data-c='${i}'>${[...Array(11).keys()].map(n => `<option value='${n}' ${d.r == n ? 'selected' : ''}>${n} レンチャン</option>`).join('')}</select></div>
+      <div class='grid md:grid-cols-2 gap-2'>${LV(c.mode).map(l => `<div class='flex items-center gap-2'><span class='w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-800 rounded py-1'>${LB(l)}</span><input data-f='s' data-c='${i}' data-l='${l}' value='${esc(d.s[l])}' placeholder='曲名/アーティスト名'></div>`).join('')}</div>
+      <input data-f='c' data-c='${i}' value='${esc(d.c)}' placeholder='ひとこと（例：この曲でいけるはず！）'></div>`;
+  };
+  const wcard = `<div class='card mb-4 space-y-2'><h3 class='font-bold text-yellow-400'>🏁 どっちの軍が勝つ？（当たると${PT_T}pt）</h3><select data-f='win' data-c='0'>${[['', '選んでください'], ['chi', '千鳥軍'], ['kam', 'かまいたち軍'], ['draw', '引き分け']].map(([v, l]) => `<option value='${v}' ${winOf(p) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
+  $('tab-predict').innerHTML =
+    `<div class='card flex items-center justify-between mb-4'><span class='text-sm text-gray-400'>現在の予想者: <b class='text-yellow-400'>${esc(S.me.name)}</b></span><button type='button' class='btn bg-gray-800 text-yellow-400 text-xs' data-a='tab' data-t='profile'>名前・プロフィール変更</button></div><p class='text-xs text-gray-400 mb-3'>選曲は「曲名/アーティスト名」の形で、鬼レンチャンwikiでの表記で入力してね。人の名前は敬称略で。</p>` + wcard +
+    groups(S.ch).map(g => `<h2 class='font-bold text-lg text-red-300 mb-2'>${g.label}${g.key === 'none' ? '（どっちの軍か予想しよう）' : ''}</h2>` + g.items.map(card).join('')).join('') +
+    `<button type='button' class='btn w-full bg-green-600 py-3 text-lg' data-a='savep'>💾 予想を保存する</button>`;
+}
+
+function rPredict() {
+  rPredict0();
+  if (!drawn || !hasName()) return;
+  const el = $('tab-predict'), lk = locked();
+  const banner = lk ? `<div class='card mb-4 text-center text-red-300'>🔒 予想は締切しました。変更はできません。</div>`
+    : (S.deadline ? `<div class='card mb-4 text-center text-sm text-gray-300'>⏰ 予想の締切：${esc(fmtDl(S.deadline))}</div>` : '');
+  el.innerHTML = banner + el.innerHTML;
+  if (lk && el.querySelectorAll) el.querySelectorAll('input,select,button[data-a="savep"]').forEach(x => { x.disabled = true; });
+}
+function totals() {
+  const t = {};
+  const add = (n, x) => { const o = t[n] || (t[n] = { n, pt: 0, rounds: 0, wins: 0 }); o.pt += x.t; o.rounds++; return o; };
+  S.past.forEach(p => withRk(p.rank.map(x => ({ ...x }))).forEach(x => { const o = add(x.n, x); if (x.rk === 1) o.wins++; }));
+  if (S.decided) Object.keys(S.pred).forEach(n => add(n, sc(n)));
+  return withRk(Object.values(t).sort((a, b) => b.pt - a.pt), 'pt');
+}
+function totalCard() {
+  const tt = totals();
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>👑 総合ランキング（通算）</h2><p class='text-xs text-gray-400 mb-3'>これまでの全部の回のポイントの合計です${S.decided ? '（今回の分も含む）' : ''}</p>` +
+    (tt.length ? tt.map((x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${x.rk}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.pt}pt <span class='text-xs text-gray-400'>(${x.rounds}回参加／優勝${x.wins}回)</span></span></div>`).join('') : `<p class='text-sm text-gray-400'>まだデータがありません</p>`) + `</div>`;
+}
+
+function rRanking() {
+  const names = Object.keys(S.pred);
+  const rk = withRk(names.map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t));
+  const row = (x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${x.rk}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.t}pt <span class='text-xs text-gray-400'>(数${x.r}＋曲${x.s}${x.w ? `＋人${x.w}` : ''}${x.m ? `＋軍${x.m}` : ''})</span></span></div>`;
+  const cur = `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>🏆 今回の回のランキング</h2><p class='text-xs text-gray-400 mb-3'>各回のランキングは「📚 過去の回」で見られます</p>` +
+    (S.decided ? (rk.length ? rk.map(row).join('') : `<p class='text-sm text-gray-400'>予想がまだありません</p>`) : `<p class='text-sm text-gray-400'>放送後に管理人が結果を入力するとここに表示されます</p>`) + `</div>`;
+  const help = `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-2'>📖 ポイントのルール</h2>
+    <ul class='text-sm space-y-1'>
+      <li>🎯 レンチャン数がぴったり：<b class='text-yellow-400'>${PT_R}pt</b></li>
+      <li>🎯 レンチャン数が±1：<b class='text-yellow-400'>${PT_R1}pt</b></li>
+      <li>🎵 選曲が正解（1曲ごと）：<b class='text-yellow-400'>${PT_S}pt</b></li>
+      <li>👤 「？？」の正体を当てる（1人ごと）：<b class='text-yellow-400'>${PT_W}pt</b></li>
+      <li>🏁 どっちの軍が勝つか当てる：<b class='text-yellow-400'>${PT_T}pt</b></li>
+      <li>🚩 挑戦者の所属の軍を当てる（1人ごと）：<b class='text-yellow-400'>${PT_TM}pt</b></li>
+    </ul>
+    <p class='text-xs text-gray-400 mt-3'>名前は敬称略で入力してください。「？？」が2人のときは順不同で、1人当たるごとに${PT_W}ptです。</p><p class='text-xs text-gray-400 mt-2'>選曲は「<b>曲名/アーティスト名</b>」の形で、鬼レンチャンwikiでの表記と同じ名称で入力してください。表記が違うと不正解になることがあります。スペース、大文字小文字、全角半角の違いは無視します。</p>
+    <p class='text-xs text-gray-400 mt-2'>総合ランキングは、全部の回のポイントの合計です。</p></div>`;
+  $('tab-ranking').innerHTML = totalCard() + cur + help;
+}
+
+function rResults() {
+  const okS = new Set(S.ok);
+  if (!(locked() || admin)) {
+    $('tab-results').innerHTML = `<div class='card text-center space-y-2'><p class='text-lg'>🔒 みんなの予想は、締切後に公開されます</p>${S.deadline ? `<p class='text-sm text-gray-400'>締切：${esc(fmtDl(S.deadline))}</p>` : `<p class='text-sm text-gray-400'>管理人が締切を決めると、その時刻に公開されます</p>`}</div>`;
+    return;
+  }
+  const names = Object.keys(S.pred);
+  if (!S.pred[vp]) vp = names[0] || '';
+  const rk = withRk(names.map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t));
+  let h = winCard(S.pred, S.decided ? actualWin() : '');
+
+  const cell = (n, i) => {
+    const c = S.ch[i], d = S.pred[n][i] || { r: 0, s: {}, c: '' };
+    return `<div class="bg-gray-800 rounded p-3 mb-2 text-sm"><div class="flex justify-between"><b>${esc(vm === 'ch' ? n : dn(c, i))}</b><span class="text-yellow-400">${d.r}レンチャン${S.decided ? `（正解${c.real}）` : ''}</span></div>
+      ${d.c ? `<p class="text-gray-400">💬 ${esc(d.c)}</p>` : ''}${whoLine(c, d)}
+      <div class="grid md:grid-cols-2 gap-x-3 mt-1">${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = S.decided && songOk(c, i, l, d.s[l], okS); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`;
+  };
+
+  h += `<div class="card"><h2 class="font-bold text-yellow-400 mb-3">👥 みんなの予想</h2>
+    <div class="flex gap-2 mb-3"><button type="button" class="btn ${vm === 'ch' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="ch">挑戦者別</button><button type="button" class="btn ${vm === 'pp' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="pp">予想者別</button></div>`;
+  if (!names.length) h += '<p class="text-sm text-gray-400">まだ予想がありません</p>';
+  else if (vm === 'ch') {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto">${S.ch.map((c, i) => `<button type="button" class="btn shrink-0 ${vc === i ? 'bg-red-600' : 'bg-gray-800'}" data-a="vc" data-i="${i}">${esc(dn(c, i))}</button>`).join('')}</div>` + names.map(n => cell(n, vc)).join('');
+  } else {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto">${names.map(n => `<button type="button" class="btn shrink-0 ${vp === n ? 'bg-red-600' : 'bg-gray-800'}" data-a="vp" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div>` + S.ch.map((c, i) => cell(vp, i)).join('');
+  }
+  $('tab-results').innerHTML = h + '</div>';
+}
+
+function rProfile() {
+  const pr = S.prof[S.me.name] || {};
+  $('tab-profile').innerHTML =
+    `<div class="card mb-4 space-y-3"><h2 class="font-bold text-yellow-400">👤 あなたのプロフィール</h2>
+    <div><label class="text-sm text-gray-400">名前（参加者名・<b class="text-red-300">必須</b>）</label><input id="pn" valu
