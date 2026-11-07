@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>千鳥の鬼レンチャン 予想＆ランキング</title>
+<meta name="description" content="サビだけカラオケ みんなで予想＆ランキング対決。放送前に予想して、ポイントで競おう！">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="鬼レンチャン 予想＆ランキング">
+<meta property="og:title" content="千鳥の鬼レンチャン 予想＆ランキング">
+<meta property="og:description" content="サビだけカラオケ みんなで予想＆ランキング対決。放送前に予想して、ポイントで競おう！">
+<meta property="og:url" content="https://pen-hue.github.io/oniren/">
+<meta property="og:image" content="https://pen-hue.github.io/oniren/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#7f1d1d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icon.png">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1p:wght@900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:#030712;color:#f3f4f6;font-family:'Noto Sans JP',sans-serif;margin:0}
+.tf{font-family:'M PLUS Rounded 1p','Noto Sans JP',sans-serif}
+.red{background:linear-gradient(135deg,#b91c1c,#7f1d1d)}
+input,select{background:#1f2937;border:1px solid #374151;border-radius:.5rem;padding:.4rem .6rem;color:#fff;width:100%;font-size:16px}
+.card{background:#111827;border:1px solid #1f2937;border-radius:.75rem;padding:1rem}
+.btn{border-radius:.5rem;font-weight:700;padding:.5rem 1rem;cursor:pointer;color:#fff}
+nav .btn{flex-shrink:0;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <header class="red text-center mb-6 p-6 rounded-2xl border-4 border-yellow-500 shadow-2xl">
+    <h1 class="tf text-2xl md:text-5xl text-yellow-300">🔥 千鳥の鬼レンチャン 予想アプリ 🔥</h1>
+    <p class="text-sm mt-2 font-bold">サビだけカラオケ みんなで予想＆ランキング対決</p>
+    <p class="text-xs mt-1 text-yellow-200">ver.27</p>
+  </header>
+  <nav class="flex gap-2 mb-4 bg-gray-900 p-2 rounded-xl border border-gray-800 overflow-x-auto sticky top-0 z-40">
+    <button type="button" id="nav-predict" data-a="tab" data-t="predict" class="btn text-sm">🎯 予想入力</button>
+    <button type="button" id="nav-results" data-a="tab" data-t="results" class="btn text-sm">📊 予想</button>
+    <button type="button" id="nav-ranking" data-a="tab" data-t="ranking" class="btn text-sm">🏆 ランキング</button>
+    <button type="button" id="nav-profile" data-a="tab" data-t="profile" class="btn text-sm">👤 プロフィール</button>
+    <button type="button" id="nav-past" data-a="tab" data-t="past" class="btn text-sm">📚 過去の回</button>
+    <button type="button" id="nav-db" data-a="tab" data-t="db" class="btn text-sm">📖 データベース</button>
+    <button type="button" id="nav-quiz" data-a="tab" data-t="quiz" class="btn text-sm">🎮 ゲーム</button>
+    <button type="button" id="nav-admin" data-a="tab" data-t="admin" class="btn text-sm">⚙️ 管理人</button>
+    <button type="button" id="nav-share" data-a="share" class="btn text-sm bg-gray-700">🔗 共有</button>
+  </nav>
+  <div id="sync" class="text-center text-xs text-gray-500 mb-3">接続中…</div>
+  <main>
+    <section id="tab-predict"></section>
+    <section id="tab-results" class="hidden"></section>
+    <section id="tab-ranking" class="hidden"></section>
+    <section id="tab-profile" class="hidden"></section>
+    <section id="tab-past" class="hidden"></section>
+    <section id="tab-db" class="hidden"></section>
+    <section id="tab-quiz" class="hidden"></section>
+    <section id="tab-admin" class="hidden"></section>
+    <p class="text-center text-xs text-gray-400 mt-6">管理人X：<a href="https://x.com/pen_oniren1111" target="_blank" rel="noopener noreferrer" class="text-yellow-400 underline">@pen_oniren1111</a></p>
+  </main>
+</div>
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-8 bg-yellow-400 text-gray-950 font-bold px-5 py-3 rounded-xl shadow-2xl z-50"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getFirestore, doc, collection, setDoc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD3-5S_UnEVf1ODfhJ9Eh4E7IO1f8cL9H8",
+  authDomain: "onirenprediction.firebaseapp.com",
+  projectId: "onirenprediction",
+  storageBucket: "onirenprediction.firebasestorage.app",
+  messagingSenderId: "192591353649",
+  appId: "1:192591353649:web:779e8fada64bc001c90210"
+};
+const appP = initializeApp(firebaseConfig), appA = initializeApp(firebaseConfig, 'admin');
+const db = getFirestore(appP), dbA = getFirestore(appA);   // db: 参加者用 / dbA: 管理人用
+const authA = getAuth(appA);
+const authP = getAuth(appP); signInAnonymously(authP).catch(() => {});   // 参加者の目印（自分のデータだけ削除できるようにする）
+const uidFor = n => { const p = P[pid(n)], u = authP.currentUser && authP.currentUser.uid; if (!u) return {}; return (!p || !p.uid || p.uid === u) ? { uid: u } : {}; };
+const ADMIN_EMAIL = 'kanri@oniren.example';   // 画面には出さない固定のメール（パスワード認証の入れ物）
+let authErr = '';
+const pid = n => 'p_' + encodeURIComponent(n);
+// ===== 設定 =====
+const PT_R = 5, PT_R1 = 3, PT_S = 5, PT_W = 5, PT_T = 1, PT_TM = 1; // ぴったり / ±1 / 選曲1つ / ？？の挑戦者を当てる // // レンチャン数ぴったり / ±1 / 選曲1つ正解
+const KEY = 'oni_renchan_v2';
+// 鬼レンチャンwikiの登場済み曲（2026/10/27更新分）。入力の候補に出す
+const SONGS = ["愛の言霊 〜Spiritual Message〜/サザンオールスターズ","愛は勝つ/KAN","I love you/河村隆一","青いイナズマ/SMAP","青空/THE BLUE HEARTS","あなたに/MONGOL800","暴れだす/ウルフルズ","雨あがりの夜空に/RCサクセション","歩いて帰ろう/斉藤和義","ALONE/B'z","Easy Come, Easy Go!/B'z","いすゞのトラック/大友康平","IT'S ONLY LOVE/福山雅治","愛しい人へ/ET-KING","上を向いて歩こう/坂本九","海の声/浦島太郎(桐谷健太)","お江戸-O・EDO-/カブキロックス","大きな玉ねぎの下で/爆風スランプ","OH MY LITTLE GIRL/尾崎豊","贈る言葉/海援隊","想い出がいっぱい/H₂O","およげ!たいやきくん/子門真人","家族になろうよ/福山雅治","悲しい色やね〜OSAKA BAY BLUES/上田正樹","悲しみにさよなら/安全地帯","硝子の少年/KinKi Kids","かわいいひと/ウルフルズ","感謝カンゲキ雨嵐/嵐","乾杯/長渕剛","君だけに/少年隊","君に、胸キュン。/Y.M.O.","車の中でかくれてキスをしよう/Mr.Children","香水/瑛人","告白/FUNKY MONKEY BABYS","心の旅/チューリップ","さくら/ケツメイシ","桜坂/福山雅治","酒と泪と男と女/河島英五","サボテンの花/チューリップ","サマー･ドリーム/TUBE","サンサーラ/竹原ピストル","SHE! HER! HER!/Kis-My-Ft2","時代/德永英明","しゃぼん玉/長渕剛","Shangri-La/電気グルーヴ","15の夜/尾崎豊","シングルベッド/シャ乱Q","すばらしい日々/ユニコーン","世界に一つだけの花/SMAP","世界はそれを愛と呼ぶんだぜ/サンボマスター","接吻/ORIGINAL LOVE","第ゼロ感/10-FEET","抱いてセニョリータ/山下智久","太陽が燃えている/THE YELLOW MONKEY","太陽と埃の中で/CHAGE and ASKA","CHA-LA HEAD-CHA-LA/影山ヒロノブ","CHANGE YOURSELF!/布袋寅泰","TRUE LOVE/藤井フミヤ","遠く遠く/槇原敬之","友よ〜この先もずっと…/ケツメイシ","TRAIN-TRAIN/THE BLUE HEARTS","Don’t Look Back In Anger/oasis","どんなときも。/槇原敬之","とんぼ/長渕剛","ニホンノミカタ-ネバダカラキマシタ-/矢島美容室","眠り姫/SEKAI NO OWARI","Heart/福山雅治","はいよろこんで/こっちのけんと","BAD COMMUNICATION/B'z","ハッとして!Good/田原俊彦","花/ORANGE RANGE","花-Mémento-Mori-/Mr.Children","パプリカ/米津玄師","HELLO/福山雅治","フラワー/KinKi Kids","BLOWIN'/B'z","ベイビー・アイラブユー/TEE","マシンガンをぶっ放せ/Mr.Children","また逢う日まで/尾崎紀世彦","MUSIC FOR THE PEOPLE/V6","夢想花/円広志","Message/福山雅治","もう一度キスしたかった/B'z","やさしくなりたい/斉藤和義","YOUNG MAN(Y.M.C.A.)/西城秀樹","夢じゃない/スピッツ","よー、そこの若いの/竹原ピストル","楽園ベイベー/RIP SLYME","Last Christmas/Wham!","リバーサイドホテル/井上陽水","R.Y.U.S.E.I./三代目 J Soul Brothers","リンダ リンダ/THE BLUE HEARTS","若者たち/森山直太朗","愛なんだ/V6","I for You/LUNA SEA","あとひとつ/FUNKY MONKEY BABYS","Another Orion/藤井フミヤ","ありがとう/FUNKY MONKEY BABYS","イージュー★ライダー/奥田民生","いつかのメリークリスマス/B'z","いとしのエリー/サザンオールスターズ","彩り/Mr.Children","WE ARE THE CHAMPIONS/QUEEN","Everybody Go/Kis-My-Ft2","オリジナル スマイル/SMAP","Only Human/K","ONLY YOU/BOØWY","ガッツだぜ!!/ウルフルズ","北風 ～君にとどきますように～/槇原敬之","北酒場/細川たかし","君がいるだけで/米米CLUB","君が思い出になる前に/スピッツ","君は1000%/1986オメガトライブ","きよしのズンドコ節/氷川きよし","口笛/Mr.Children","クリスマス・イブ/山下達郎","GOLDFINGER’99/郷ひろみ","サクラ咲ケ/嵐","さすらい/奥田民生","She/Elvis Costello","ジェットコースター・ロマンス/KinKi Kids","情熱の薔薇/THE BLUE HEARTS","SPARK/THE YELLOW MONKEY","全てが僕の力になる!/くず","すれ違いの純情/T-BOLAN","青春 ↑THE/HIGH-LOWS↓","晴天を誉めるなら夕暮れを待て/ASKA","空も飛べるはず/スピッツ","小さな恋のうた/MONGOL800","Choo Choo TRAIN/EXILE","東京砂漠/内山田洋とクール・ファイブ","TOKIO/沢田研二","DREAMIN'/BOØWY","涙そうそう/BEGIN","夏疾風/嵐","涙/ケツメイシ","涙のキッス/サザンオールスターズ","涙のリクエスト/チェッカーズ","虹/福山雅治","BURN/THE YELLOW MONKEY","はじまりはいつも雨/ASKA","走れ正直者/西城秀樹","花になれ/flumpool","ビートDEトーヒ/ハマいく","ヒーロー/FUNKY MONKEY BABYS","HERO/Mr.Children","人として/海援隊","人にやさしく/THE BLUE HEARTS","ブーメラン ストリート/西城秀樹","ff/HOUND DOG","冬の稲妻/アリス","Pleasure 2008 ～人生の快楽～/B'z","Hey!みんな元気かい?/KinKi Kids","home/木山裕策","星屑のステージ/チェッカーズ","Melty Love/SHAZNA","モニカ/吉川晃司","Monster/嵐","楽園/THE YELLOW MONKEY","Love is…/河村隆一","RUN/B'z","Runner/爆風スランプ","ランナウェイ/ラッツ&スター","ROCKET DIVE hide/with Spread Beaver","ロマンス/PENICILLIN","浪漫飛行/米米CLUB","ワインレッドの心/安全地帯","若者のすべて/フジファブリック","WAになっておどろう/V6","笑えれば/ウルフルズ","One Night Carnival/氣志團","One more time, One more chance/山崎まさよし","One Love/嵐","アイデア/星野源","I Don't Want to Miss a Thing/エアロスミス","愛のままにわがままに僕は君だけを傷つけない/B'z","I LOVE YOU/尾崎豊","明日の記憶/嵐","明日はきっといい日になる/高橋優","いい日旅立ち/谷村新司","一番偉い人へ/とんねるず","IT'S MY LIFE/BON JOVI","いつまでも変わらぬ愛を/織田哲郎","WON'T BE LONG/バブルガム・ブラザーズ","歌うたいのバラッド/斉藤和義","海 その愛/加山雄三","YELL〜エール〜/コブクロ","ESCAPE/MOON CHILD","ever free hide/with Spread Beaver","OCEAN/B'z","崖の上のポニョ/藤岡藤巻と大橋のぞみ","勝手にしやがれ/沢田研二","悲しみの果て/エレファントカシマシ","ガラスの十代/光GENJI","傷だらけのローラ/西城秀樹","奇跡の地球/桑田佳祐&Mr.Children","君といつまでも/加山雄三","銀河鉄道999/EXILE","クリスマスキャロルの頃には/稲垣潤一","Get Along Together/山根康広","恋/松山千春","恋してムーチョ/TUBE","恋人/鈴木雅之","恋をとめないで/COMPLEX","高校三年生/舟木一夫","言葉にできない/オフコース","さそり座の女/美川憲一","SUMMER SUSPICION/杉山清貴&オメガトライブ","365日/Mr.Children","幸せな結末/大滝詠一","シェリー/尾崎豊","少年時代/井上陽水","ずっと一緒さ/山下達郎","ずっと好きだった/斉藤和義","STAY DREAM/長渕剛","Still on a journey/Travis Japan","世界が終るまでは…/WANDS","SOUL LOVE/GLAY","宙船/TOKIO","それぞれのストーリー/5uppers","ダイナマイト/SMAP","だって夏じゃない/TUBE","たどり着いたらいつも雨降り/吉田拓郎","旅立ちの唄/Mr.Children","チェリー/スピッツ","CHAINSAW BLOOD/Vaundy","田園/玉置浩二","TRUE BLUE/LUNA SEA","情けねえ/とんねるず","夏の王様/KinKi Kids","夏の終りのハーモニー/井上陽水・安全地帯","夏の日の1993/class","走れSAKAMOTO/Vaundy","初恋/村下孝蔵","ハネウマライダー/ポルノグラフィティ","Happiness/嵐","BANG! BANG! バカンス!/SMAP","BEAT/河村隆一","ひとり咲き/CHAGE and ASKA","ヒトリノ夜/ポルノグラフィティ","himawari/Mr.Children","ふたりの夏物語/杉山清貴&オメガトライブ","PRIDE/CHAGE and ASKA","Bling-Bang-Bang-Born/Creepy Nuts","POISON/布袋寅泰","〜言いたい事も言えないこんな世の中は〜/反町隆史","望郷じょんから/細川たかし","ボクの背中には羽根がある/KinKi Kids","星空のディスタンス THE/ALFEE","POP STAR/平井堅","真夏の果実/サザンオールスターズ","Make-up Shadow/井上陽水","メロディー/玉置浩二","もしもピアノが弾けたなら/西田敏行","ヤバみ/ヤバイTシャツ屋さん","夢の中へ/井上陽水","夢を信じて/德永英明","RIDE ON TIME/山下達郎","ラストチャンス/Something ELse","LOVE AFFAIR〜秘密のデート〜/サザンオールスターズ","LOVE YOU ONLY/TOKIO","LA・LA・LA LOVE SONG/久保田利伸","リゾ・ラバ-Resort Lovers-/爆風スランプ","Rain/秦基博","ろくなもんじゃねえ/長渕剛","RPG/SEKAI NO OWARI","あいことば/Snow Man","アイデンティティ/サカナクション","アイネクライネ/米津玄師","愛を語るより口づけをかわそう/WANDS","浅草キッド/ビートたけし","明日に向かってプッシュプッシュ/プッシュ徳永","明日晴れるかな/桑田佳祐","あずさ2号/狩人","あの紙ヒコーキ くもり空わって/19","AMBITIOUS JAPAN!/TOKIO","愛し君へ/森山直太朗","鱗/秦基博","栄光の架橋/ゆず","大空と大地の中で/松山千春","男の勲章/嶋大輔","お嫁サンバ/郷ひろみ","俺ら東京さ行ぐだ/吉幾三","オレンジ/SMAP","Curtain Call feat.Taka/清水翔太","悲しみは雪のように/浜田省吾","KISS ME/氷室京介","君が好き/Mr.Children","君と羊と青/RADWIMPS","君は天然色/大瀧詠一","君を忘れない/松山千春","キラキラ/小田和正","グロリアス/GLAY","恋人ごっこ/マカロニえんぴつ","壊れかけのRadio/德永英明","最愛/福山雅治","Sign/Mr.Children","桜/河口恭吾","叫び/野猿","さよなら/オフコース","さよならエレジー/菅田将暉","サヨナラバス/ゆず","SUN/星野源","燦燦/三浦大知","シーズン・イン・ザ・サン/TUBE","私鉄沿線/野口五郎","島人ぬ宝/BEGIN","Jumpin' Jack Boy/WANDS","白い雲のように/猿岩石","新宝島/サカナクション","strawberry/BUMP OF CHICKEN","全てあげよう/新浜レオン","青春の影/チューリップ","全力少年/スキマスイッチ","卒業/尾崎豊","Zokkon 命/シブがき隊","太陽は罪な奴/サザンオールスターズ","抱きしめたい/Mr.Children","ただ…逢いたくて/EXILE","DAN DAN 心魅かれてく/FIELD OF VIEW","チャンカパーナ/NEWS","TSUNAMI/サザンオールスターズ","Dream/吉幾三","Don't Leave Me/B'z","napori/Vaundy","涙の海で抱かれたい〜SEA OF LOVE〜/サザンオールスターズ","波乗りジョニー/桑田佳祐","虹/Aqua Timez","虹/菅田将暉","NO MORE CRY/D-51","裸足の女神/B'z","Butter-Fly/和田光司","花/藤井風","離したくはない/T-BOLAN","HONEY BEAT/V6","バラ色の日々/THE YELLOW MONKEY","バンビーナ/布袋寅泰","PIECES OF A DREAM/CHEMISTRY","一目惚れ/舟津真翔","ひとりじゃない/DEEN","ひまわりの約束/秦基博","ファンファーレ/玉置浩二","fish/back number","ふたつの唇/EXILE","Progress/kōkua","HOME/B'z","マリア/T-BOLAN","モーニングムーン/CHAGE and ASKA","もっと美しくなれ/小野正利","You Go Your Way/CHEMISTRY","雪國/吉幾三","夢物語/タッキー&翼","Right Here Waiting/Richard Marx","Love so sweet/嵐","LOVE PHANTOM/B'z","愛のかたまり/KinKi Kids","アイラブユー/back number","美しい鰭/スピッツ","笑顔のまんま BEGIN with/アホナスターズ","襟裳岬/森進一","Over/Mr.Children","オカンのLINE/石川晟也","楓/スピッツ","風に吹かれて/エレファントカシマシ","格好悪いふられ方/大江千里","季節の中で/松山千春","きっと どこかで/TUBE","君がいたから/FIELD OF VIEW","君がいるから/EXILE","君という名の翼/コブクロ","Glass/河村隆一","CROSS ROAD/Mr.Children","恋/back number","今宵の月のように/エレファントカシマシ","今夜だけきっと/スターダスト☆レビュー","最高到達点/SEKAI NO OWARI","最後の雨/中西保志","サマーヌード/真心ブラザーズ","3月9日/レミオロメン","SHAKE/SMAP","Just the Way You Are/Billy Joel","宿命/Official髭男dism","純恋歌/湘南乃風","衝動/B'z","しるし/Mr.Children","スパークル/RADWIMPS","ズルい女/シャ乱Q","千の風になって/秋川雅史","空に唄えば/175R","タイムパラドックス/Vaundy","たしかなこと/小田和正","チキンライス/浜田雅功と槇原敬之","できっこないを やらなくちゃ/サンボマスター","天体観測/BUMP OF CHICKEN","Tomorrow never knows/Mr.Children","突然/FIELD OF VIEW","突破口/SUPER BEAVER","止まらないHa～Ha/矢沢永吉","ドラえもん/星野源","浪花節だよ人生は/細川たかし","Bye For Now/T-BOLAN","HANABI/Mr.Children","バンザイ〜好きでよかった〜/ウルフルズ","B・BLUE/BOØWY","人として/SUPER BEAVER","瞳をとじて/平井堅","ひとりぼっちのハブラシ/桜庭裕一郎","100万年の幸せ!!/桑田佳祐","冬がはじまるよ/槇原敬之","flower/L'Arc〜en〜Ciel","HOME/清水翔太","僕が僕であるために/尾崎豊","ボクノート/スキマスイッチ","星になれたら/Mr.Children","My Gift to You/CHEMISTRY","まつり/北島三郎","魔法の絨毯/川崎鷹也","Marionette-マリオネット-/BOØWY","Missing/久保田利伸","め⃝組のひと/ラッツ&スター","燃えろいい女/ツイスト","YAH YAH YAH/CHAGE and ASKA","やっぱ好きやねん/やしきたかじん","ゆるぎないものひとつ/B'z","らいおんハート/SMAP","Lifetime Respect/三木道三","Lovers Again/EXILE","LOVE SONG/CHAGE and ASKA","love me, I love you/B'z","Real Face/KAT-TUN","RAIN/SEKAI NO OWARI","Rock this Party/timelesz","Romanticが止まらない/C-C-B","わたがし/back number","I AM YOUR SINGER/サザンオールスターズ","愛唄/GReeeeN","愛されるより愛したい/KinKi Kids","愛はスローにちょっとずつ/サザンオールスターズ","生きとし生ける物へ/森山直太朗","いつか/ゆず","イト/クリープハイプ","innocent world/Mr.Children","if.../DA PUMP","weeeek/NEWS","Wherever you are/ONE OK ROCK","初心LOVE/なにわ男子","WOW WAR TONIGHT ～時には起こせよムーヴメント～/H Jungle With t","エソラ/Mr.Children","エロティカ・セブン/サザンオールスターズ","ENDLESS RAIN/X JAPAN","Always/光永亮太","俺たちの明日/エレファントカシマシ","オレンジ/SPYAIR","怪獣の花唄/Vaundy","奏/スキマスイッチ","ガラナ/スキマスイッチ","がんばりましょう/SMAP","希望の轍/サザンオールスターズ","キレイだね/小野正利","Get Wild/TM NETWORK","限界突破×サバイバー/氷川きよし","恋/星野源","ここにしか咲かない花/コブクロ","粉雪/レミオロメン","ゴミ人間、俺/ヤングスキニー","サウダージ/ポルノグラフィティ","桜/コブクロ","さくら (独唱)/森山直太朗","さまよえる蒼い弾丸/B'z","シーソーゲーム〜勇敢な恋の歌〜/Mr.Children","JAM/THE YELLOW MONKEY","12月のLove song/GACKT","上・京・物・語/シャ乱Q","SPY/槇原敬之","SMILE 〜晴れ渡る空のように〜/桑田佳祐","SAY YES/CHAGE and ASKA","千の夜をこえて/Aqua Timez","大切なもの/ロードオブメジャー","W/X/Y/Tani Yuuki","ちっぽけな勇気/FUNKY MONKEY BABYS","繋いだ手から/back number","道化師のソネット/さだまさし","Dragon Night/SEKAI NO OWARI","永遠にともに/コブクロ","長い夜/松山千春","夏の終わり/森山直太朗","猫/DISH//","Nobody’s Home/ONE OK ROCK","Birthday/Mr.Children","灰色と青/米津玄師","HIGH PRESSURE/T.M.Revolution","箱根八里の半次郎/氷川きよし","パパランパンプッシュ/石川晟也","Habit/SEKAI NO OWARI","万里の河/CHAGE and ASKA","HERO(ヒーローになる時、それは今)/甲斐バンド","瞳そらさないで/DEEN","BELOVED/GLAY","BREAKOUT/Snow Man","WHITE BREATH/T.M.Revolution","まちがいさがし/菅田将暉","祭りのあと/桑田佳祐","道/EXILE","もっと強く抱きしめたなら/WANDS","You’re the Only…/小野正利","流星/コブクロ","アイビー/Novelbright","I LOVE YOU/クリス・ハート","I WAS BORN TO LOVE YOU/QUEEN","青いベンチ/サスケ","足音 〜Be Strong/Mr.Children","熱き鼓動の果て/B'z","アポロ/ポルノグラフィティ","アンマー/かりゆし58","言えないよ/郷ひろみ","We are/ONE OK ROCK","Walking with you/Novelbright","馬と鹿/米津玄師","Everything(It’s you)/Mr.Children","オールドファッション/back number","悲しい気持ち(JUST A MAN IN LOVE)/桑田佳祐","ギフト/ET-KING","ケセラセラ/Mrs. GREEN APPLE","決意の朝に/Aqua Timez","心絵/ロードオブメジャー","このまま君だけを奪い去りたい/DEEN","桜木町/ゆず","サチアレ/なにわ男子","巡恋歌/長渕剛","シンデレラガール/King & Prince","好きすぎて滅!/M!LK","刹那/GReeeeN","ZERO/B'z","セロリ/SMAP","前前前世/RADWIMPS","千両役者/King Gnu","DIVE TO BLUE/L'Arc〜en〜Ciel","TATTOO/Official髭男dism","ダンシング・オールナイト/もんた&ブラザーズ","Ti Amo/EXILE","どうして君を好きになってしまったんだろう?/東方神起","truth/嵐","永遠に/ゴスペラーズ","名前を呼ぶよ/SUPER BEAVER","名もなき詩/Mr.Children","なんでもないよ、/マカロニえんぴつ","虹/L'Arc〜en〜Ciel","のびしろ/Creepy Nuts","ハッピーエンド/back number","花束/back number","花束のかわりにメロディーを/清水翔太","Vanilla/GACKT","115万キロのフィルム/Official髭男dism","familie/Mrs. GREEN APPLE","Point of No Return/CHEMISTRY","Forever Love/X JAPAN","冬と春/back number","瞬き/back number","魔法って言っていいかな?/平井堅","みんなのうた/サザンオールスターズ","女々しくて/ゴールデンボンバー","U.S.A./DA PUMP","Love me, Love you/Mrs. GREEN APPLE","レイニーブルー/德永英明","Lemon/米津玄師","ロビンソン/スピッツ","あー夏休み/TUBE","愛のメモリー/松崎しげる","雨燦々/King Gnu","イチブトゼンブ/B'z","インフェルノ/Mrs. GREEN APPLE","永遠/Mr.Children","【es】～Theme of es～/Mr.Children","哀歌(エレジー)/平井堅","おやすみ泣き声、さよなら歌姫/クリープハイプ","終わりなき旅/Mr.Children","感電/米津玄師","黄色/back number","君は薔薇より美しい/布施明","きらり/藤井風","秋桜/さだまさし","今夜月の見える丘に/B'z","Silent Jealousy/X JAPAN","逆夢/King Gnu","サンクチュアリ/Da-iCE","1/3の純情な感情/SIAM SHADE","青春アミーゴ/修二と彰","大都会/クリスタルキング","題名のない今日/平井大","蕾/コブクロ","飛べない鳥/ゆず","ドライフラワー/優里","涙のふるさと/BUMP OF CHICKEN","Part-Time Lover/STEVIE WONDER","馬鹿みたい。/Saucy Dog","HONEY/L'Arc〜en〜Ciel","遥か/GReeeeN","Pretender/Official髭男dism","ベテルギウス/優里","僕が一番欲しかったもの/槇原敬之","HOTEL PACIFIC/サザンオールスターズ","まつり/藤井風","ミュージック・アワー/ポルノグラフィティ","未来/コブクロ","もう恋なんてしない/槇原敬之","もっと強く/EXILE","もののけ姫/米良美一","ライラック/Mrs. GREEN APPLE","楽園/平井堅","リライト/ASIAN KUNG-FU GENERATION","私以外私じゃないの/ゲスの極み乙女。","ワタリドリ/[Alexandros]","愛とか恋とか/Novelbright","愛のバクダン/B'z","愛をとりもどせ!!/クリスタルキング","青と夏/Mrs. GREEN APPLE","アゲハ蝶/ポルノグラフィティ","Unchained Melody/The Righteous Brothers","イエスタデイ/Official髭男dism","いつか/Saucy Dog","おしゃかしゃま/RADWIMPS","廻廻奇譚/Eve","風になって/[Alexandros]","キセキ/GReeeeN","KICK BACK/米津玄師","GIFT/Mr.Children","口唇/GLAY","クリスマスソング/back number","恋音と雨空/AAA","さぁ/SURFACE","三文小説/King Gnu","シグナル/WANIMA","CITRUS/Da-iCE","白い恋人達/桑田佳祐","Same Blue/Official髭男dism","Dynamite/BTS","高嶺の花子さん/back number","ドラマ/C&K","夏色/ゆず","虹/ゆず","ねがい/B'z","ノーダウト/Official髭男dism","ノンフィクション/平井堅","ヒロイン/back number","100万回の「I love you」/Rake","ミックスナッツ/Official髭男dism","誘惑/GLAY","Rusty Nail/X JAPAN","LADY/米津玄師","I LOVE…/Official髭男dism","unravel TK from/凛として時雨","幾億光年/Omoinotake","Winter,again/GLAY","winter fall/L'Arc〜en〜Ciel","ultra soul/B'z","Cry Baby/Official髭男dism","くるみ/Mr.Children","紅/X JAPAN","Subtitle/Official髭男dism","シュガーソングとビターステップ/UNISON SQUARE GARDEN","絶対零度/なとり","Soranji/Mrs. GREEN APPLE","ダンスホール/Mrs. GREEN APPLE","点描の唄(feat.井上苑子)/Mrs. GREEN APPLE","ともに/WANIMA","HOWEVER/GLAY","白日/King Gnu","ひとり/ゴスペラーズ","FIREBALL/B'z","ファタール/GEMN","僕のこと/Mrs. GREEN APPLE","HOT LIMIT/T.M.Revolution","毎日/米津玄師","メフィスト/女王蜂","Love Love Love/平井堅","LOSER/米津玄師","ROSIER/LUNA SEA","ロマンチシズム/Mrs. GREEN APPLE","ええねん〜スマドリver.〜/飲みトモズ","サファイアの馬車道/ペリー・キー","全アジア地球万博テーマ　PM:5:00/ペリー・キー","TIRO・TIRO・TIN/ペリー・キー","博士が愛したペ・ペン/ペリー・キー","HORIZON/ペリー・キー","愛人/テレサ・テン","アジアの純真/PUFFY","あなたに逢いたくて～Missing You～/松田聖子","あの鐘を鳴らすのはあなた/和田アキ子","雨の慕情/八代亜紀","ありがとう/いきものがかり","糸/中島みゆき","WOMAN/アン・ルイス","越冬つばめ/森昌子","All The Things She Said/t.A.T.u.","おどるポンポコリン/B.B.クィーンズ","オリビアを聴きながら/杏里","Only Time/Enya","革命道中-On The Way/アイナ・ジ・エンド","飾りじゃないのよ涙は/中森明菜","君がいない/ZARD","GIVE ME FIVE!/AKB48","CRAZY GONNA CRAZY/TRF","恋するフォーチュンクッキー/AKB48","恋人がサンタクロース/松任谷由実","恋一夜/工藤静香","恋人よ/五輪真弓","黄砂に吹かれて/工藤静香","ココ☆ナツ/ももいろクローバー","この愛に泳ぎ疲れても/ZARD","さくらんぼ/大塚愛","ザ☆ピ～ス!/モーニング娘。","サヨナラ/GAO","さよなら大好きな人/花＊花","さよならだけどさよならじゃない/やまだかつてないWINK","SEASONS/浜崎あゆみ","潮騒のメモリー/小泉今日子","JOY/YUKI","少女人形/伊藤つかさ","白いパラソル/松田聖子","ZUTTO/永井真理子","スローモーション/中森明菜","セーラー服と機関銃/薬師丸ひろ子","タッチ/岩崎良美","ダンシング・ヒーロー(Eat You Up)/荻野目洋子","探偵物語/薬師丸ひろ子","翼の折れたエンジェル/中村あゆみ","てぃんさぐぬ花/夏川りみ","手紙〜拝啓 十五の君へ〜/アンジェラ・アキ","天使のウィンク/松田聖子","TOMORROW/岡本真夜","時の流れに身をまかせ/テレサ・テン","俱に/中島みゆき","にじいろ/絢香","ハッピーサマーウェディング/モーニング娘。","ハナミズキ/一青窈","パプリカ/Foorin","ハルノヒ/あいみょん","PIECE OF MY WISH/今井美樹","ひと夏の経験/山口百恵","二人は恋人/森高千里","プラネタリウム/大塚愛","ふりむけばヨコハマ/マルシア","ベイビー・アイラブユー/シェネル","ヘビーローテーション/AKB48","BOY MEETS GIRL/TRF","ポケベルが鳴らなくて/国武万里","Voyage/浜崎あゆみ","マイフレンド/ZARD","また君に恋してる/坂本冬美","まちぶせ/荒井由実","真赤な太陽/美空ひばり","待つわ/あみん","真夜中のドア〜stay with me/松原みき","Man&Woman/My Little Lover","夢をあきらめないで/岡村孝子","横須賀ストーリー/山口百恵","ラヴ・イズ・オーヴァー/欧陽菲菲","LOVEマシーン/モーニング娘。","リフレインが叫んでる/松任谷由実","リルラリルハ/木村カエラ","会いたかった/AKB48","愛のしるし/PUFFY","I believe/絢香","I Need To Be In Love/CARPENTERS","青い珊瑚礁/松田聖子","赤いスイートピー/松田聖子","あの夏の花火/DREAMS COME TRUE","亜麻色の髪の乙女/島谷ひとみ","アメイジング・グレイス/Hayley Westenra","いい日旅立ち/山口百恵","言い訳Maybe/AKB48","恋しさとせつなさと心強さと/篠原涼子","運命のルーレット廻して/ZARD","YELL/いきものがかり","エジソン/水曜日のカンパネラ","Everyday、カチューシャ/AKB48","ガチやべぇじゃん feat.ななもり。/P丸様。","悲しみよ こんにちは/斉藤由貴","北ウイング/中森明菜","君しか勝たん/日向坂46","銀の龍の背に乗って/中島みゆき","くちびるから媚薬/工藤静香","グッド・バイ・マイ・ラブ/アン・ルイス","黒毛和牛上塩タン焼680円/大塚愛","元気を出して/竹内まりや","恋のダンスサイト/モーニング娘。","木枯しに抱かれて/小泉今日子","これが私の生きる道/PUFFY","サイレント・イヴ/辛島美登里","桜が降る夜は/あいみょん","サマーナイトタウン/モーニング娘。","五月雨よ/櫻坂46","365日の紙飛行機/AKB48","時代/中島みゆき","十戒/中森明菜","島唄/夏川りみ","じょんから女節/長山洋子","SWEET MEMORIES/松田聖子","好き/西野カナ","Starry Heavens/day after tomorrow","Story/AI","瀬戸の花嫁/小柳ルミ子","センチメンタル・ジャーニー/松本伊代","大スキ!/広末涼子","大切なあなた/松田聖子","地上の星/中島みゆき","CHA-CHA-CHA/石井明美","慟哭/工藤静香","Don't you see!/ZARD","渚にまつわるエトセトラ/PUFFY","渚のバルコニー/松田聖子","謎/小松未歩","涙そうそう/夏川りみ","難破船/中森明菜","裸足の季節/松田聖子","Butterfly/木村カエラ","happiness!!!/木村カエラ","晴れたらいいね/DREAMS COME TRUE","バレンタイン・キッス/国生さゆりwithおニャン子クラブ","Feel Like dance/globe","フライディ・チャイナタウン/泰葉","BLUE TEARS/JUDY AND MARY","Poker Face/Lady Gaga","My Happy Ending/Avril Lavigne","My Revolution/渡辺美里","負けないで/ZARD","masquerade/TRF","真夏の夜の夢/松任谷由実","守ってあげたい/松任谷由実","ミニモニ。ジャンケンぴょん!/ミニモニ。","ムーンライト伝説/DALI","モーニングコーヒー/モーニング娘。","もっと もっと…/篠原涼子 with t.komuro","♡桃色片想い♡/松浦亜弥","ゆめいっぱい/関ゆみ子","ラ・セゾン/アン・ルイス","love the island/鈴木あみ","瑠璃色の地球/松田聖子","六本木純情派/荻野目洋子","六本木心中/アン・ルイス","ロマンティックあげるよ/橋本潮","わかれうた/中島みゆき","私がオバさんになっても/森高千里","会いたい/沢田知可子","愛のうた/倖田來未","碧いうさぎ/酒井法子","明日への手紙/手嶌葵","あなたに会えてよかった/小泉今日子","嵐の素顔/工藤静香","EZ DO DANCE/TRF","Yeah!めっちゃホリディ/松浦亜弥","YESTERDAY ONCE MORE/カーペンターズ","We Are The World/USA for AFRICA","ENDLESS STORY/伊藤由奈","Over and Over/Every Little Thing","ALL MY TRUE LOVE/SPEED","オトナブルー/新しい学校のリーダーズ","想い出の九十九里浜/Mi-Ke","帰りたくなったよ/いきものがかり","かもめが翔んだ日/渡辺真知子","カレーライスの女/ソニン","気分上々↑↑/mihimaru GT","気分爽快/森高千里","君をのせて/井上あずみ","CAT'S EYE/杏里","キューティーハニー/倖田來未","ギンガムチェック/AKB48","クラシック/JUDY AND MARY","Grip!/Every Little Thing","化粧/中島みゆき","今夜はHearty Party/竹内まりや","桜月/櫻坂46","淋しい熱帯魚/Wink","サンキュ./DREAMS COME TRUE","Shapes Of Love/Every Little Thing","シャボン玉/モーニング娘。","17才/森高千里","白いカイト/My Little Lover","SMILY/大塚愛","そうだ!We’re ALIVE/モーニング娘。","卒業/斉藤由貴","卒業写真/荒井由実","空の青さを知る人よ/あいみょん","Diamonds/PRINCESS PRINCESS","ただ泣きたくなるの/中山美穂","魂のルフラン/高橋洋子","CHE.R.RY/YUI","ちょこっとLOVE/プッチモニ","珍島物語/天童よしみ","津軽海峡・冬景色/石川さゆり","つぐない/テレサ・テン","DEAR…again/広瀬香美","DESIRE-情熱-/中森明菜","どうにもとまらない/山本リンダ","ドキドキ/JUDY AND MARY","鳥取砂丘/水森かおり","となりのトトロ/井上あずみ","長い間/Kiroro","渚のシンドバッド/ピンク・レディー","夏色のナンシー/早見優","夏の扉/松田聖子","夏祭り/Whiteberry","眠れない夜を抱いて/ZARD","春よ、来い/松任谷由実","VALENTI/BoA","Hello,Again〜昔からある場所〜/My Little Lover","Beginner/AKB48","ひだまりの詩/Le Couple","BiSH-星が瞬く夜に-/BiSH","for you…/髙橋真梨子","舟唄/八代亜紀","プレイバックpart2/山口百恵","Precious Memories/globe","Born This Way/Lady Gaga","ホタルノヒカリ/いきものがかり","ボヘミアン/葛城ユキ","微笑みの爆弾/馬渡松子","Magic Music/木村カエラ","マリーゴールド/あいみょん","三日月/絢香","麦の唄/中島みゆき","めざせポケモンマスター/松本梨香","元彼女のみなさまへ/コレサワ","木綿のハンカチーフ/太田裕美","桃色吐息/髙橋真梨子","ヤマトナデシコ七変化/小泉今日子","揺れる想い/ZARD","LOVE涙色/松浦亜弥","LOVE2000/hitomi","ルージュの伝言/荒井由実","Roar/Katy Perry","ロマンスの神様/広瀬香美","私の16才/小泉今日子","渡良瀬橋/森高千里","あゝ無情/アン・ルイス","Aitai/加藤ミリヤ","I BELIEVE/華原朋美","明日も/MUSH&Co.","us/milet","明日への扉/I WiSH","あなたの好きなところ/西野カナ","ALIVE/SPEED","いちばん近くにいてね/大黒摩季","異邦人/久保田早紀","今すぐ Kiss Me/LINDBERG","イミテイション・ゴールド/山口百恵","永遠/ZARD","笑顔/いきものがかり","駅/竹内まりや","オーケストラ/BiSH","大声ダイヤモンド/AKB48","おかえり/絢香","喝采/ちあきなおみ","カムフラージュ/竹内まりや","きっと忘れない/ZARD","Catch the Moment/LiSA","Good-bye My Loneliness/ZARD","Go! Go! Heaven/SPEED","心を開いて/ZARD","秋桜/山口百恵","ごめんね…/髙橋真梨子","最上級にかわいいの!/超ときめき♡宣伝部","桜色舞うころ/中島美嘉","サマータイム ブルース/渡辺美里","さよならの向う側/山口百恵","残酷な天使のテーゼ/高橋洋子","サンサーラ/WON","secret base 〜君がくれたもの〜/ZONE","自転車/JUDY AND MARY","修羅場/東京事変","純愛ラプソディ/竹内まりや","シングル・アゲイン/竹内まりや","シンクロニシティ/乃木坂46","すずめ feat.十明/RADWIMPS","STARS/中島美嘉","世界でいちばん熱い夏/PRINCESS PRINCESS","1986年のマリリン/本田美奈子","そばにいるね/青山テルマ feat.SoulJa","Song for.../HY","大好き/大原櫻子","Time goes by/Every Little Thing","だから僕は音楽を辞めた/ヨルシカ","宝者/アイナ・ジ・エンド","DAN DAN 心魅かれてく/ZARD","月のしずく/RUI(柴咲コウ)","出逢った頃のように/Every Little Thing","DESTINY/松任谷由実","トリセツ/西野カナ","なごり雪/イルカ","夏をあきらめて/研ナオコ","なんてったってアイドル/小泉今日子","パート・オブ・ユア・ワールド/豊原江理佳","バイバイ 里田まい with/合田兄妹","初恋が泣いている/あいみょん","Bad Romance/Lady Gaga","花/石嶺聡子","ハピネス/AI","ハレ晴レユカイ/平野綾・茅原実里・後藤邑子","Hero/安室奈美恵","FACE/globe","冬のファンタジー/カズン","PRIDE/今井美樹","BLUE BIRD/浜崎あゆみ","BREAK OUT!/相川七瀬","フレンズ/レベッカ","Best Friend/Kiroro","ポニーテールとシュシュ/AKB48","炎/LiSA","MajiでKoiする5秒前/広末涼子","聖母たちのララバイ/岩崎宏美","真夏の夜の匂いがする/あいみょん","やさしい気持ち/Chara","やさしさに包まれたなら/荒井由実","酔いどれ知らず/Kanaria","Like A Virgin/Madonna","Ride on time/MAX","笑ってたいんだ/いきものがかり","愛燦燦/美空ひばり","愛情/小柳ゆき","愛のバカやろう/後藤真希","愛の花/あいみょん","愛をからだに吹き込んで/Superfly","愛を知るまでは/あいみょん","明日、春が来たら/松たか子","あなた/宇多田ヒカル","A Perfect Sky/BONNIE PINK","歩いていこう/いきものがかり","行くぜっ!怪盗少女/ももいろクローバー","一番綺麗な私を/中島美嘉","インフルエンサー/乃木坂46","WILL/中島美嘉","ヴィルマ/ハリウリサ","永遠のあくる日/Ado","Over Drive/JUDY AND MARY","「男」/久宝留理子","学園天国/小泉今日子","風になる/つじあやの","片想い/miwa","かたち あるもの/柴咲コウ","可愛くてごめん HoneyWorks/feat.かぴ","川の流れのように/美空ひばり","完璧主義で☆/FRUITS ZIPPER","ギブス/椎名林檎","Give me a Shake/MAX","気まぐれロマンティック/いきものがかり","君に逢いたくなったら…/ZARD","逆光/Ado","Good-bye days/YUI","GLAMOROUS SKY/NANA starring MIKA NAKASHIMA","群青日和/東京事変","恋におちたら/Crystal Kay","恋におちて-Fall in love-/小林明子","ここでキスして。/椎名林檎","God knows…/涼宮ハルヒ(C.V.平野綾)","コネクト/ClariS","Complicated/Avril Lavigne","SURREAL/浜崎あゆみ","sign/JUJU","サウスポー/ピンク・レディー","寒い夜だから…/TRF","SAYONARAベイベー/加藤ミリヤ","366日/HY","Shake It Off/Taylor Swift","少女A/中森明菜","シンデレラ・ハネムーン/岩崎宏美","Sweet Emotion/相川七瀬","SWEET PAIN/globe","世界中の誰よりきっと/中山美穂&WANDS","そばかす/JUDY AND MARY","大好きだよ。/大塚愛","DA・KA・RA/大黒摩季","ただ君に晴れ/ヨルシカ","Dancing Queen/ABBA","ちゅ、多様性。/ano","Destiny/シェネル","DEPARTURES/globe","TRY ME〜私を信じて〜/安室奈美恵","トラブルメイカー/相川七瀬","眠れぬ夜は君のせい/MISIA","No way to say/浜崎あゆみ","倍倍FIGHT!/CANDY TUNE","Butterfly/倖田來未","初恋/中島美嘉","花無双/アイナ・ジ・エンド","パピヨン～papillon～/島谷ひとみ","晴る/ヨルシカ","be alive/小柳ゆき","二人セゾン/欅坂46","fragile/Every Little Thing","古い日記/和田アキ子","Blue Velvet/工藤静香","Flavor Of Life/宇多田ヒカル","Body Feels EXIT/安室奈美恵","マンハッタン・キス/竹内まりや","ミ・アモーレ/中森明菜","魅せられて/ジュディ・オング","みんな空の下/絢香","Movin'on without you/宇多田ヒカル","Make you happy/NiziU","やさしさで溢れるように/JUJU","雪の華/中島美嘉","ライオン/May'n／中島愛","Last Smile/LOVE PSYCHEDELICO","LOVER SOUL/JUDY AND MARY","Love,Day After Tomorrow/倉木麻衣","LOVE LOVE LOVE/DREAMS COME TRUE","Return to Myself/浜田麻里","One Moment In Time/Whitney Houston","愛を止めないで/倖田來未","茜色の約束/いきものがかり","熱くなれ/大黒摩季","Addicted To You/宇多田ヒカル","あなたがいることで/Uru","あなただけ見つめてる/大黒摩季","あなたを感じていたい/ZARD","甘い運命/UA","ALICE/My Little Lover","いつだって僕らは/いきものがかり","if/西野カナ","今 逢いに行く/Uru","おっととっと夏だぜ!/EE JUMP","ORION/中島美嘉","帰ってこいよ/松村和子","奇蹟/Uru","君って/西野カナ","君はロックを聴かない/あいみょん","Can't Stop Fallin' in Love/globe","CAN YOU CELEBRATE?/安室奈美恵","激情/工藤静香","甲賀忍法帖/陰陽座","こころ酒/藤あや子","サイレントマジョリティー/欅坂46","SAKURA/いきものがかり","Sunny Day Sunday/センチメンタル・バス","sabotage/緑黄色社会","散歩道/JUDY AND MARY","Jupiter/平原綾香","少女の頃に戻ったみたいに/ZARD","すきっ!/ときめき♡宣伝部","制服のマネキン/乃木坂46","空と君のあいだに/中島みゆき","Darling/西野カナ","大切な君へ/井上苑子","Timing〜タイミング〜/BLACK BISCUITS","たとえ どんなに…/西野カナ","Chase the Chance/安室奈美恵","Dear/中島美嘉","Dear My Friend/Every Little Thing","Dearest/浜崎あゆみ","This Is Me/Keala Settle&The Greatest Showman Ensemble","トイレの神様/植村花菜","TO BE/浜崎あゆみ","Top of the world/カーペンターズ","ドレミソラシド/日向坂46","Don't wanna cry/安室奈美恵","夏が来る/大黒摩季","走れ!/ももいろクローバー","初恋/aiko","春〜spring〜/Hysteric Blue","春泥棒/ヨルシカ","Hello/Adele","POWER/ポケットビスケッツ","ヒカリヘ/miwa","ひこうき雲/荒井由実","ひたむきシンデレラ!/CUTIE STREET","ファジーネーブル/Conton Candy","feel my soul/YUI","Fall/Superfly","フルーツバスケット/FRUITS ZIPPER","ブルーバード/いきものがかり","プロローグ/Uru","BABY DON'T CRY/安室奈美恵","Boys & Girls/浜崎あゆみ","ボーイフレンド/aiko","ホール・ニュー・ワールド(新しい世界)/石井一孝・麻生かほ里","マジックアワー/緑黄色社会","MUGO・ん…色っぽい/工藤静香","mottö/JUDY AND MARY","もらい泣き/一青窈","ゆずれない願い/田村直美","夢見る少女じゃいられない/相川七瀬","夜桜お七/坂本冬美","LOVE & JOY/木村由姫","ら・ら・ら/大黒摩季","リブート/miwa","レディメイド/Ado","恋愛レボリューション21/モーニング娘。","私は最強/Ado","I WISH/モーニング娘。","愛の重さ/STU48","愛をこめて花束を/Superfly","あの微笑みを忘れないで/ZARD","アンコール/YOASOBI","YELLOW YELLOW HAPPY/ポケットビスケッツ","Wake Me Up!/SPEED","打上花火/DAOKO×米津玄師","生まれてはじめて/神田沙也加、松たか子","うれしい!たのしい!大好き!/DREAMS COME TRUE","SOS/シェネル","Everything/MISIA","evolution/浜崎あゆみ","M/PRINCESS PRINCESS","Alright!!/Superfly","おもいで酒/小林幸子","風が吹いている/いきものがかり","COLORS/宇多田ヒカル","かわいいだけじゃだめですか?/CUTIE STREET","Kiss & Cry/宇多田ヒカル","奇跡/シェネル","奇跡を望むなら.../JUJU","君に夢中/宇多田ヒカル","キュン/日向坂46","くじら12号/JUDY AND MARY","GLORIA/YUI","月光/鬼束ちひろ","恋心/相川七瀬","恋の罠しかけましょ 〜FUNK THE PEANUTSのテーマ〜/FUNK THE PEANUTS","桜の時/aiko","サマータイムシンデレラ/緑黄色社会","ざらめ/あいみょん","Shout Baby/緑黄色社会","シャナナ☆/MINMI","新時代/Ado","Swallowtail Butterfly 〜あいのうた〜/YEN TOWN BAND","There will be love there-愛のある場所-/the brilliant green","世界はあなたに笑いかけている/Little Glee Monster","創聖のアクエリオン/AKINO from bless4","抱いて HOLD ON ME!/モーニング娘。","太陽のSEASON/安室奈美恵","チョット/大黒摩季","DISTANCE/宇多田ヒカル","This Love/アンジェラ・アキ","TO LOVE YOU MORE/Celine Dion","どこまでも 〜How Far I'll Go〜/屋比久知奈","Trust/浜崎あゆみ","渚のはいから人魚/小泉今日子","ハート/あいみょん","拝啓、少年よ/Hump Back","裸の心/あいみょん","花になって - Be a flower/緑黄色社会","花火/aiko","ヒーロー/麻倉未稀","BELIEVE/MISIA","不協和音/欅坂46","White Love/SPEED","My Heart Will Go On/Celine Dion","丸ノ内サディスティック/椎名林檎","みずいろの雨/八神純子","ミチヲユケ/緑黄色社会","未来予想図Ⅱ/DREAMS COME TRUE","Moon Crying/倖田來未","やさしい気持ちで/Superfly","夢のうた/倖田來未","Like Flames/MindaRyn","Love Story/安室奈美恵","レット・イット・ゴー〜ありのままで〜/松たか子","let go/m-flo","レンズ/幾田りら","わたしの一番かわいいところ/FRUITS ZIPPER","ワダツミの木/元ちとせ","アイノカタチ feat.HIDE(GReeeeN)/MISIA","I'm proud/華原朋美","明日も/SHISHAMO","アドベンチャー/YOASOBI","あなたに恋をしてみました/chay","〜You were mine〜/小柳ゆき","天城越え/石川さゆり","アルデバラン/AI","生きていたんだよな/あいみょん","一斉ノ喝采/LiSA","inside you/milet","イントゥ・ジ・アンノウン〜心のままに/松たか子","We Are Never Ever Getting Back Together/Taylor Swift","ETERNAL BLAZE/水樹奈々","Anytime smokin' cigarette/globe","M/浜崎あゆみ","大阪LOVER/DREAMS COME TRUE","Automatic/宇多田ヒカル","おジャ魔女カーニバル!!/MAHO堂","君の知らない物語/supercell","きゅるりんしてみて/きゅるりんってしてみて","キラーチューン/東京事変","キラキラ/aiko","Greatest Love Of All/Whitney Houston","恋のつぼみ/倖田來未","幸福論/椎名林檎","心という名の不可解/Ado","SAKURAドロップス/宇多田ヒカル","残響散歌/Aimer","スターラブレイション/ケラケラ","千本桜/和楽器バンド","千本桜/WhiteFlame feat.初音ミク","それを愛と呼ぶなら/Uru","つつみ込むように.../MISIA","強く儚い者たち/Cocco","traveling/宇多田ヒカル","1/2/川本真琴","Party!!/緑黄色社会","花は桜 君は美し/いきものがかり","Happiness/シェネル","ハミング/幾田りら","晩餐歌/tuki.","秒針を噛む/ずっと真夜中でいいのに。","Finally/安室奈美恵","フライングゲット/AKB48","フレア/Superfly","Hate tell a lie/華原朋美","Best Friend/西野カナ","HOME/アンジェラ・アキ","Body & Soul/SPEED","眩暈/鬼束ちひろ","メリクリ/BoA","もう少しだけ/YOASOBI","You Raise Me Up/Celtic Woman","流星群/鬼束ちひろ","ルル/Ado","会いたくて 会いたくて/西野カナ","逢いたくていま/MISIA","愛を伝えたいだとか/あいみょん","明け星/LiSA","阿修羅ちゃん/Ado","あの夢をなぞって/YOASOBI","Into the Unknown/Idina Menzel,AURORA","All By Myself/セリーヌ・ディオン","踊/Ado","海馬成長痛/ずっと真夜中でいいのに。","輝く月のように/Superfly","カブトムシ/aiko","GO FOR IT!!/西野カナ","今夜このまま/あいみょん","サクラ色/アンジェラ・アキ","Chandelier/Sia","祝福/YOASOBI","唱/Ado","情熱/UA","Symphony(feat.Zara Larsson)/Clean Bandit","STEADY/SPEED","Saving All My Love For You/Whitney Houston","セブンティーン/YOASOBI","正しくなれない/ずっと真夜中でいいのに。","罪と罰/椎名林檎","Dear…/西野カナ","何度でも/DREAMS COME TRUE","NIPPON/椎名林檎","人魚/NOKKO","光/宇多田ヒカル","Beautiful/Superfly","Beautiful World/宇多田ヒカル","First/Love 宇多田ヒカル","ブリキノダンス/Ado","Precious/伊藤由奈","プロミスザスター/BiSH","my graduation/SPEED","Mela!/緑黄色社会","やさしいキスをして/DREAMS COME TRUE","I Will Always Love You/Whitney Houston","あいつら全員同窓会/ずっと真夜中でいいのに。","アイドル/YOASOBI","I Didn't Know My Own Strength/Whitney Houston","I Have Nothing/Whitney Houston","I Wanna Dance with Somebody/Whitney Houston","朝がまた来る/DREAMS COME TRUE","UNDEAD/YOASOBI","命に嫌われている。/初音ミク","Wait & See～リスク～/宇多田ヒカル","嘘じゃない/ずっと真夜中でいいのに。‪","ウタカタララバイ/Ado","うっせぇわ/Ado","Episode X/Ado","エルフ/Ado","All I Want for Christmas Is You/Mariah Carey","Ordinary days/milet","お勉強しといてよ/ずっと真夜中でいいのに。‪","怪物/YOASOBI","歌舞伎町の女王/椎名林檎","Can You Keep A Secret?/宇多田ヒカル","クラクラ/Ado","紅蓮華/LiSA","群青/YOASOBI","決戦は金曜日/DREAMS COME TRUE","ゲレンデがとけるほど恋したい/広瀬香美","GO! GO! MANIAC/放課後ティータイム","残機/ずっと真夜中でいいのに。","三原色/YOASOBI","幸せをつかみたい/広瀬香美","色彩/yama","人生は夢だらけ/椎名林檎","TAIDADA/ずっと真夜中でいいのに。","TIME TO SAY GOODBYE/サラ・ブライトマン","タマシイレボリューション/Superfly","テレキャスター・ストライプ/ポルカドットスティングレイ","トウキョウ・シャンディ・ランデヴ/MAISONdes feat. 花譜, ツミキ","ドラマティックに恋して/広瀬香美","Don't You Worry 'bout A Thing/Tori Kelly","恥ずかしいか青春は/緑黄色社会","果てなく続くストーリー/MISIA","花束を君に/宇多田ヒカル","ハルジオン/YOASOBI","春を告げる/yama","Because You Loved Me/Celine Dion","ビビデバ/星街すいせい","ビリーヴ/シェネル","FACES PLACES/globe","舞台に立って/YOASOBI","Prisoner Of Love/宇多田ヒカル","Break out of your bubble/Little Glee Monster","promise/広瀬香美","僕らはいきものだから/緑黄色社会","本能/椎名林檎","My All/Mariah Carey","MAGIC/Ado","MUSE/ME:I","ユメヲカケル!/ウマ娘","夜に駆ける/YOASOBI","Lovin' You/Minnie Riperton","Run/Leona Lewis","Run To You/Whitney Houston","Listen/Beyoncé","リベリオン/Ado","忘れない日々/MISIA"];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LV = m => m === 'hard' ? ['5','6','7','8','9','10-1','10-2','10-3','10-4','10-5'] : ['1','2','3','4','5','6','7','8','9','10'];
+const LB = l => l.startsWith('10-') ? '10(' + l.slice(3) + ')' : 'Lv.' + l;
+const nm = s => String(s || '').normalize('NFKC').replace(/[\s'’‘"“”`´.,、。・!?~〜～\-‐‑–—―&()\[\]{}「」『』【】♪♡☆★:;\/]/g, '').toLowerCase();
+const mkData = () => ({
+  me: { name: '鬼レンチャン好き' },
+  ch: ['A','B','C','D'].map((x, i) => ({ name: '挑戦者' + x, mode: 'normal', team: '', real: 0, songs: {} })),
+  pred: {}, prof: {}, pub: '', hid: [], decided: false
+});
+
+let L = null; // この端末だけに保存: 名前と入力中の下書き
+try { L = JSON.parse(localStorage.getItem(KEY)); } catch (e) { L = null; }
+if (!L || !L.me) L = { me: { name: '', set: false }, draft: null };
+if (!L.dev) L.dev = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now().toString(36);   // この端末の目印（名前の持ち主の判定用）
+const S = mkData();
+S.me = L.me; S.past = []; S.rid = 0; S.title = ''; S.airDate = ''; S.win = ''; S.deadline = ''; S.deadlineMs = 0; S.ok = [];
+let P = {};
+let pe = -1, pledit = '', xfCode = '';
+let admin = false, vm = 'ch', vc = 0, vp = '', po = -1, pm = 'ch', pc = 0, pp = '';
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ me: S.me, draft: L.draft, dev: L.dev })); } catch (e) {} }
+const tmo = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 8000))]);
+function fail(e) {
+  toast(e && e.code === 'timeout' ? '保存がサーバーに届いていません。通信を確認してください'
+    : e && e.code === 'permission-denied' ? '保存できませんでした（締切後、または権限がありません）'
+    : '保存できませんでした（' + ((e && e.code) || '通信') + '）');
+}
+async function saveDbx() {
+  try {
+    const mt = String(S.airDate || todayStr()).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/), d = mt ? `${mt[1]}-${String(mt[2]).padStart(2, '0')}-${String(mt[3]).padStart(2, '0')}` : new Date().toISOString().slice(0, 10);
+    const ch = S.ch.filter(c => c.name && !/^挑戦者[A-Z]$/.test(c.name)).map(c => [({ chi: '千鳥軍', kam: 'かまいたち軍' })[c.team] || '', 0, c.name, c.real || 0, '']);
+    if (ch.length) await tmo(setDoc(doc(dbA, 'dbx', 'r' + S.rid), { series: 'r', title: roundTitle(), date: d, ch, ts: Date.now() }));
+  } catch (e) {}
+}
+async function pushRound() {
+  S.ch.forEach(c => { c.lockMs = (S.decided || c.done) ? 1 : (dlOf(c) || 0); });
+  try { await tmo(setDoc(doc(dbA, 'app', 'round'), { ch: S.ch, decided: S.decided, rid: S.rid, title: S.title, airDate: S.airDate, win: S.win || '', deadline: S.deadline || '', deadlineMs: S.deadlineMs || 0, pub: S.pub || '', hid: S.hid || [], ok: S.ok || [], ts: Date.now() })); return true; }
+  catch (e) { fail(e); return false; }
+}
+let tt;
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.remove('hidden');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.add('hidden'), 4500);
+}
+function mine() {
+  const n = S.me.name;
+  if (!L.draft || L.draft.n !== n || L.draft.rid !== S.rid) L.draft = { n, rid: S.rid, d: S.pred[n] ? JSON.parse(JSON.stringify(S.pred[n])) : [] };
+  S.ch.forEach((_, i) => { if (!L.draft.d[i]) L.draft.d[i] = { r: 5, s: {}, c: '' }; });
+  return L.draft.d;
+}
+const TEAMS = { chi: '千鳥軍', kam: 'かまいたち軍', none: '所属未定' };
+const WINL = { chi: '千鳥軍', kam: 'かまいたち軍', draw: '引き分け' };
+const ORD = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const teamOf = (c, i) => c.team === undefined ? (i < 2 ? 'chi' : 'kam') : c.team;
+const takenBy = n => Object.values(P).some(p => nm(p.name) === nm(n) && p.owner && p.owner !== L.dev);
+const hasName = () => !!(S.me.set && S.me.name);
+const unkN = c => (String(c.name).match(/[？?]{2}/g) || []).length;
+const dn = c => { let k = 0; const ws = c.ws || []; return String(c.name).replace(/[？?]{2}/g, m => ws[k++] || m); };
+const na = x => nm(x).replace(/(さん|くん|君|ちゃん|氏|様)$/, '');
+const winOf = pr => (pr && pr[0] && pr[0].win) || '';
+function groups(ch) {
+  const g = { chi: [], kam: [], none: [] };
+  ch.forEach((c, i) => g[teamOf(c, i) || 'none'].push({ c, i }));
+  return ['chi', 'kam', 'none'].map(k => ({ key: k, label: TEAMS[k], items: g[k].map((x, j) => ({ ...x, k: j })) })).filter(x => x.items.length);
+}
+const slot = it => (ORD[it.k] || (it.k + 1)) + '人目';
+const todayStr = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); };
+const fmtDate = d => { const m = String(d || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return m ? m[1] + '/' + (+m[2]) + '/' + (+m[3]) : (d || ''); };
+const nextRoundNo = () => Math.max(0, ...DB.filter(e => e[0] === 'r').map(e => +((e[1].match(/^第(\d+)回/) || [])[1]) || 0), ...S.past.map(p => +(((p.title || '').match(/第(\d+)回/) || [])[1]) || 0)) + 1;
+const roundTitle = () => S.title || ('第' + nextRoundNo() + '回');
+const glMs = () => S.deadline ? new Date(S.deadline).getTime() : 0;
+const dlOf = c => c.dl ? new Date(c.dl).getTime() : glMs();
+const lockedC = c => !!(S.decided || c.done || (dlOf(c) && Date.now() >= dlOf(c)));
+const locked = () => S.ch.length ? S.ch.every(lockedC) : !!(S.decided || (S.deadlineMs && Date.now() >= S.deadlineMs));
+const pubOpenC = c => S.pub === 'show' || (S.pub !== 'hide' && lockedC(c));
+const pubOpen = () => S.pub === 'show' || (S.pub !== 'hide' && S.ch.some(lockedC));
+const rankOn = () => !!(S.decided || S.ch.some(c => c.done));
+const fmtLeft = ms => { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? `${d}日${h}時間${m}分` : h ? `${h}時間${m}分` : `${m}分${s % 60}秒`; };
+const cdText = () => { const ds = S.ch.filter(c => !lockedC(c)).map(dlOf).filter(Boolean); return ds.length ? '⏳ 次の締切まで あと ' + fmtLeft(Math.min(...ds) - Date.now()) : ''; };
+setInterval(() => { const e = $('cd'); if (e) e.textContent = cdText(); }, 1000);
+const curRank = () => withRk(Object.keys(S.pred).filter(n => !(S.hid || []).includes(n)).map(n => ({ n, ...sc(n) })).sort((x, y) => y.t - x.t));
+const SHB = `<div class='flex gap-2 mt-2'><button type='button' class='btn flex-1 bg-gray-700 text-sm' data-a='shres' data-m='x'>𝕏で投稿</button><button type='button' class='btn flex-1 bg-gray-700 text-sm' data-a='shres' data-m='share'>📣 共有・コピー</button></div>`;
+const fmtTs = n => { const p = Object.values(P).find(x => x.name === n); if (!p || !p.ts) return ''; const t = new Date(p.ts); return '最終編集 ' + (t.getMonth() + 1) + '/' + t.getDate() + ' ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); };
+const fmtDl = d => String(d || '').replace('T', ' ').replace(/-/g, '/');
+const toIn = d => { const m = String(d || '').match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/); return m ? m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3]).padStart(2, '0') : ''; };
+const withRk = (arr, k = 't') => arr.map((x, i, a) => { x.rk = (i > 0 && a[i - 1][k] === x[k]) ? a[i - 1].rk : i + 1; return x; });   // 同点は同じ順位、次は飛ばす
+const songOk = (c, i, l, g, ok) => { const a = nm(c.songs[l]), x = nm(g); return !!a && !!x && (a === x || ok.has(i + ':' + l + ':' + x)); };
+function winOfRound(ch, win) {
+  if (win) return win;
+  let a = 0, b = 0;
+  ch.forEach((c, i) => { const t = teamOf(c, i); if (t === 'chi') a += c.real; else if (t === 'kam') b += c.real; });
+  return a > b ? 'chi' : b > a ? 'kam' : 'draw';
+}
+const actualWin = () => winOfRound(S.ch, S.win);
+function whoPtsR(c, d, i, ok) {
+  const act = (c.ws || []).map(na).filter(Boolean), gs = ((d && d.ws) || []).map(na), used = [];
+  let pts = 0;
+  act.forEach(a => { const j = gs.findIndex((x, idx) => !used.includes(idx) && x === a); if (j >= 0) { used.push(j); pts += PT_W; } });
+  gs.forEach((x, idx) => { if (x && !used.includes(idx) && used.length < unkN(c) && ok.has('w:' + i + ':' + x)) { used.push(idx); pts += PT_W; } });
+  return pts;
+}
+const matchWho = (c, x) => !!na(x) && (c.ws || []).some(a => na(a) === na(x));
+const tmLine = (c, d) => d && d.tm ? `<p class='text-gray-300'>🚩 所属の予想: ${TEAMS[d.tm]}${c.team && c.team === d.tm ? ' ✅' : ''}</p>` : '';
+const whoLine = (c, d) => tmLine(c, d) + (unkN(c) ? `<p class='text-gray-300'>👤 ？？の予想: ${((d && d.ws) || []).filter(Boolean).map(x => esc(x) + (matchWho(c, x) ? ' ✅' : '')).join('、') || '（なし）'}</p>` : '');
+const winCard = (pred, actual) => {
+  const names = Object.keys(pred), pick = k => names.filter(n => winOf(pred[n]) === k);
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-2'>🏁 どっちの軍が勝つ？の予想（正解${PT_T}pt）</h2>` +
+    (actual ? `<p class='text-sm mb-2'>結果: <b class='text-yellow-400'>${WINL[actual]}</b></p>` : '') +
+    ['chi', 'kam', 'draw'].map(k => `<div class='text-sm mb-1'><b>${WINL[k]}</b> ${pick(k).length}人${pick(k).length ? '：' + pick(k).map(esc).join('、') : ''}${actual === k && pick(k).length ? ' ✅' : ''}</div>`).join('') + `</div>`;
+};
+function scR(ch, pred, win, decided, ok, n) {
+  const p = pred[n] || []; let r = 0, s = 0, w = 0, m = 0;
+  ch.forEach((c, i) => {
+    const d = p[i]; if (!d || !(decided || c.done)) return;
+    const df = Math.abs(d.r - c.real);
+    r += df === 0 ? PT_R : df === 1 ? PT_R1 : 0;
+    LV(c.mode).forEach(l => { if (songOk(c, i, l, d.s[l], ok)) s += PT_S; });
+    if (unkN(c)) w += whoPtsR(c, d, i, ok);
+    if (c.team && d.tm && d.tm === c.team) m += PT_TM;
+  });
+  if (decided && winOf(p) && winOf(p) === winOfRound(ch, win)) m += PT_T;
+  return { r, s, w, m, t: r + s + w + m };
+}
+const sc = n => scR(S.ch, S.pred, S.win, S.decided, new Set(S.ok), n);
+
+// ===== 描画 =====
+function rPredict0() {
+  if (!drawn) { $('tab-predict').innerHTML = `<p class='text-center text-gray-400 py-10'>読み込み中…</p>`; return; }
+  if (!hasName()) {
+    $('tab-predict').innerHTML = `<div class='card text-center space-y-3'><p>予想する前に、プロフィールで<b class='text-yellow-400'>名前</b>を入力してください（必須）。</p><button type='button' class='btn bg-red-600' data-a='tab' data-t='profile'>プロフィールへ</button></div>`;
+    return;
+  }
+  const p = mine();
+  const card = it => {
+    const c = it.c, i = it.i, d = p[i], k = unkN(c);
+    return `<div class='card mb-4 space-y-3'><h3 class='font-bold text-yellow-400'>🎤 ${esc(dn(c, i))} <span class='text-xs text-gray-400'>(${c.mode === 'hard' ? '鬼ハード' : 'ノーマル'})</span> ${lockedC(c) ? "<span class='text-xs text-red-300'>🔒 締切済み</span>" : (dlOf(c) ? "<span class='text-xs text-gray-400'>⏰ " + esc(fmtDl(c.dl || S.deadline)) + '</span>' : '')}</h3>` +
+      (k ? `<div class='space-y-2'><label class='text-sm text-gray-400'>${k > 1 ? '？？の2人は誰？（順不同・1人当たるごとに' : '？？は誰？（当たると'}${PT_W}pt・敬称略）</label>${[...Array(k).keys()].map(j => `<input data-f='ws' data-c='${i}' data-k='${j}' value='${esc((d.ws || [])[j])}' placeholder='${k > 1 ? '予想' + (j + 1) : '予想する人の名前'}（敬称略）'>`).join('')}</div>` : '') +
+      (teamOf(c, i) === '' ? `<div><label class='text-sm text-gray-400'>どっちの軍？（当たると${PT_TM}pt）</label><select data-f='tm' data-c='${i}'>${[['', '選んでください'], ['chi', '千鳥軍'], ['kam', 'かまいたち軍']].map(([v, l]) => `<option value='${v}' ${(d.tm || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : '') +
+      `<div><label class='text-sm text-gray-400'>予想レンチャン数</label><select data-f='r' data-c='${i}'>${[...Array(11).keys()].map(n => `<option value='${n}' ${d.r == n ? 'selected' : ''}>${n} レンチャン</option>`).join('')}</select></div>
+      <div class='grid md:grid-cols-2 gap-2'>${LV(c.mode).map(l => `<div class='flex items-center gap-2'><span class='w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-800 rounded py-1'>${LB(l)}</span><input data-f='s' data-c='${i}' data-l='${l}' value='${esc(d.s[l])}' list='songs-list' autocomplete='off' placeholder='曲名/アーティスト名'></div>`).join('')}</div>
+      <input data-f='c' data-c='${i}' value='${esc(d.c)}' placeholder='ひとこと（例：この曲でいけるはず！）'></div>`;
+  };
+  const wcard = `<div class='card mb-4 space-y-2'><h3 class='font-bold text-yellow-400'>🏁 どっちの軍が勝つ？（当たると${PT_T}pt）</h3><select data-f='win' data-c='0'>${[['', '選んでください'], ['chi', '千鳥軍'], ['kam', 'かまいたち軍'], ['draw', '引き分け']].map(([v, l]) => `<option value='${v}' ${winOf(p) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
+  $('tab-predict').innerHTML =
+    `<div class='card flex items-center justify-between mb-4'><span class='text-sm text-gray-400'>現在の予想者: <b class='text-yellow-400'>${esc(S.me.name)}</b> <span class='text-xs text-gray-500'>${fmtTs(S.me.name)}</span></span><button type='button' class='btn bg-gray-800 text-yellow-400 text-xs' data-a='tab' data-t='profile'>名前・プロフィール変更</button></div><p class='text-xs text-gray-400 mb-3'>選曲は「曲名/アーティスト名」の形で、鬼レンチャンwikiでの表記で入力してね。人の名前は敬称略で。</p>` + wcard +
+    groups(S.ch).map(g => `<h2 class='font-bold text-lg text-red-300 mb-2'>${g.label}${g.key === 'none' ? '（どっちの軍か予想しよう）' : ''}</h2>` + g.items.map(card).join('')).join('') +
+    `<button type='button' class='btn w-full bg-green-600 py-3 text-lg sticky bottom-3 shadow-2xl' data-a='savep'>💾 予想を保存する</button>`;
+}
+
+function rPredict() {
+  rPredict0();
+  if (!drawn || !hasName()) return;
+  const el = $('tab-predict'), lk = locked();
+  const banner = lk ? `<div class='card mb-4 text-center text-red-300'>🔒 予想は締切しました。変更はできません。</div>`
+    : (S.deadline ? `<div class='card mb-4 text-center text-sm text-gray-300'>⏰ 予想の締切：${esc(fmtDl(S.deadline))}</div>` : '');
+  const note = lk ? '' : `<div class='card mb-4 text-xs text-gray-300 space-y-1'><p>・人の名前（？？の予想など）は<b class='text-yellow-400'>敬称略</b>で入力してください</p><p>・曲名は、候補から選ぶと表記ゆれを防げます</p><p>・他人を攻撃する発言や過激な発言は、該当部分の削除、またはデータごと削除することがあります</p></div>`;
+  const part = !lk && S.ch.some(lockedC) ? `<div class='card mb-4 text-center text-sm text-red-300'>🔒 締切になった挑戦者の予想は、変更できません</div>` : '';
+  el.innerHTML = banner + part + `<p id='cd' class='text-center text-sm text-yellow-300 mb-3'>${cdText()}</p>` + note + (lk ? '' : `<div id='savest' class='text-xs text-center mb-2'></div>`) + el.innerHTML + songListHtml();
+  paintSave();
+  if (el.querySelectorAll) {
+    el.querySelectorAll('[data-c]').forEach(x => { const i = +x.dataset.c; if (x.dataset.f === 'win' ? lk : (S.ch[i] && lockedC(S.ch[i]))) x.disabled = true; });
+    if (lk) el.querySelectorAll('button[data-a="savep"]').forEach(x => { x.disabled = true; });
+  }
+}
+function totals() {
+  const t = {};
+  const add = (n, x) => { const o = t[n] || (t[n] = { n, pt: 0, rounds: 0, wins: 0 }); o.pt += x.t; o.rounds++; return o; };
+  S.past.forEach(p => withRk(p.rank.map(x => ({ ...x }))).forEach(x => { const o = add(x.n, x); if (x.rk === 1) o.wins++; }));
+  if (rankOn()) Object.keys(S.pred).forEach(n => add(n, sc(n)));
+  return withRk(Object.values(t).sort((a, b) => b.pt - a.pt), 'pt');
+}
+function totalCard() {
+  const tt = totals();
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>👑 総合ランキング（通算）</h2><p class='text-xs text-gray-400 mb-3'>これまでの全部の回のポイントの合計です${rankOn() ? '（今回の分も含む）' : ''}</p>` +
+    (tt.length ? tt.map((x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${x.rk}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.pt}pt <span class='text-xs text-gray-400'>(${x.rounds}回参加／優勝${x.wins}回)</span></span></div>`).join('') : `<p class='text-sm text-gray-400'>まだデータがありません</p>`) + `</div>`;
+}
+
+function rRanking() {
+  const names = Object.keys(S.pred);
+  const rk = withRk(names.map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t));
+  const row = (x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${x.rk}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.t}pt <span class='text-xs text-gray-400'>(数${x.r}＋曲${x.s}${x.w ? `＋人${x.w}` : ''}${x.m ? `＋軍${x.m}` : ''})</span></span></div>`;
+  const cur = `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>🏆 今回の回のランキング</h2><p class='text-xs text-gray-400 mb-3'>各回のランキングは「📚 過去の回」で見られます</p>` +
+    (rankOn() ? (S.decided ? '' : `<p class='text-xs text-yellow-300 mb-2'>※結果が確定した挑戦者の分だけ集計しています</p>`) + (rk.length ? rk.map(row).join('') + SHB : `<p class='text-sm text-gray-400'>予想がまだありません</p>`) : `<p class='text-sm text-gray-400'>放送後に管理人が結果を入力するとここに表示されます</p>`) + `</div>`;
+  const help = `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-2'>📖 ポイントのルール</h2>
+    <ul class='text-sm space-y-1'>
+      <li>🎯 レンチャン数がぴったり：<b class='text-yellow-400'>${PT_R}pt</b></li>
+      <li>🎯 レンチャン数が±1：<b class='text-yellow-400'>${PT_R1}pt</b></li>
+      <li>🎵 選曲が正解（1曲ごと）：<b class='text-yellow-400'>${PT_S}pt</b></li>
+      <li>👤 「？？」の正体を当てる（1人ごと）：<b class='text-yellow-400'>${PT_W}pt</b></li>
+      <li>🏁 どっちの軍が勝つか当てる：<b class='text-yellow-400'>${PT_T}pt</b></li>
+      <li>🚩 挑戦者の所属の軍を当てる（1人ごと）：<b class='text-yellow-400'>${PT_TM}pt</b></li>
+    </ul>
+    <p class='text-xs text-gray-400 mt-3'>名前は敬称略で入力してください。「？？」が2人のときは順不同で、1人当たるごとに${PT_W}ptです。</p><p class='text-xs text-gray-400 mt-2'>選曲は「<b>曲名/アーティスト名</b>」の形で、鬼レンチャンwikiでの表記と同じ名称で入力してください。表記が違うと不正解になることがあります。スペース、大文字小文字、全角半角の違いは無視します。</p>
+    <p class='text-xs text-gray-400 mt-2'>総合ランキングは、全部の回のポイントの合計です。</p></div>`;
+  $('tab-ranking').innerHTML = totalCard() + cur + allStatsHtml() + help;
+}
+
+function rResults() {
+  const sb0 = $('tab-results').querySelector('.overflow-x-auto'), sl0 = sb0 ? sb0.scrollLeft : 0;
+  const okS = new Set(S.ok);
+  if (!(pubOpen() || admin)) {
+    $('tab-results').innerHTML = `<div class='card text-center space-y-2'><p class='text-lg'>🔒 ${S.pub === 'hide' ? 'みんなの予想は、管理人が非表示にしています' : 'みんなの予想は、締切後に公開されます'}</p>${S.pub === 'hide' ? '' : S.deadline ? `<p class='text-sm text-gray-400'>締切：${esc(fmtDl(S.deadline))}</p>` : `<p class='text-sm text-gray-400'>管理人が締切を決めると、その時刻に公開されます</p>`}</div>`;
+    return;
+  }
+  const hidden = n => (S.hid || []).includes(n);
+  const names = Object.keys(S.pred).filter(n => admin || !hidden(n));
+  if (!S.pred[vp] || !names.includes(vp)) vp = names[0] || '';
+  const rk = withRk(names.map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t));
+  let h = winCard(Object.fromEntries(names.map(n => [n, S.pred[n]])), S.decided ? actualWin() : '');
+
+  const cell = (n, i) => {
+    const c = S.ch[i], d = S.pred[n][i] || { r: 0, s: {}, c: '' };
+    if (!(pubOpenC(c) || admin)) return `<div class="bg-gray-800 rounded p-3 mb-2 text-sm text-gray-400">🔒 ${esc(dn(c, i))} の予想は、締切後に公開されます</div>`;
+    return `<div class="bg-gray-800 rounded p-3 mb-2 text-sm"><div class="flex justify-between"><b>${esc(vm === 'ch' ? n : dn(c, i))}${vm === 'ch' && hidden(n) ? ' 🙈' : ''}</b><span class="text-yellow-400">${d.r}レンチャン${S.decided || c.done ? `（正解${c.real}）` : ''}</span></div>
+      ${vm === 'ch' ? `<p class="text-xs text-gray-500">${fmtTs(n)}</p>` : ''}${d.c ? `<p class="text-gray-400">💬 ${esc(d.c)}</p>` : ''}${whoLine(c, d)}
+      <div class="grid md:grid-cols-2 gap-x-3 mt-1">${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = (S.decided || c.done) && songOk(c, i, l, d.s[l], okS); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`;
+  };
+
+  h += `<div class="card"><h2 class="font-bold text-yellow-400 mb-3">👥 みんなの予想</h2>
+    <div class="flex gap-2 mb-3"><button type="button" class="btn ${vm === 'ch' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="ch">挑戦者別</button><button type="button" class="btn ${vm === 'pp' ? 'bg-red-600' : 'bg-gray-800'}" data-a="vm" data-v="pp">予想者別</button></div>`;
+  if (!names.length) h += '<p class="text-sm text-gray-400">まだ予想がありません</p>';
+  else if (vm === 'ch') {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto relative">${S.ch.map((c, i) => `<button type="button" class="btn shrink-0 ${vc === i ? 'bg-red-600' : 'bg-gray-800'}" data-a="vc" data-i="${i}">${esc(dn(c, i))}</button>`).join('')}</div>` + (!S.ch[vc] || pubOpenC(S.ch[vc]) || admin ? names.map(n => cell(n, vc)).join('') : `<p class="text-sm text-gray-400">🔒 この挑戦者の予想は、締切後に公開されます</p>`);
+  } else {
+    h += `<div class="flex gap-2 mb-3 overflow-x-auto relative">${names.map(n => `<button type="button" class="btn shrink-0 ${vp === n ? 'bg-red-600' : 'bg-gray-800'}" data-a="vp" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div>` + `<p class="text-xs text-gray-400 mb-2">${hidden(vp) ? '🙈非表示中　' : ''}${fmtTs(vp)}</p>` + S.ch.map((c, i) => cell(vp, i)).join('');
+  }
+  $('tab-results').innerHTML = h + '</div>';
+  const sb = $('tab-results').querySelector('.overflow-x-auto');
+  if (sb) { sb.scrollLeft = sl0; const act = sb.querySelector('.bg-red-600'); if (act && (act.offsetLeft < sb.scrollLeft || act.offsetLeft + act.offsetWidth > sb.scrollLeft + sb.clientWidth)) sb.scrollLeft = Math.max(0, act.offsetLeft - 8); }
+}
+
+function rProfile() {
+  const pr = S.prof[S.me.name] || {};
+  $('tab-profile').innerHTML =
+    `<div class="card mb-4 text-xs text-gray-300 space-y-1"><p class="font-bold text-red-300">📝 登録前にお読みください</p><p>・ニックネームは、<b class="text-yellow-400">SNSと同じ名前</b>にしてください</p><p>・名前は、他の人と<b class="text-yellow-400">重複できません</b></p><p>・X（旧Twitter）などアプリ内のブラウザで開くと、<b class="text-yellow-400">名前が保存されない</b>ことがあります。ChromeやSafariで開いてください</p><p>・他人を攻撃する発言や過激な発言は、該当部分の削除、またはデータごと削除することがあります</p></div>
+    <div class="card mb-4 space-y-3"><h2 class="font-bold text-yellow-400">👤 あなたのプロフィール</h2>
+    <div><label class="text-sm text-gray-400">名前（参加者名・<b class="text-red-300">必須</b>）</label><input id="pn" value="${esc(S.me.set ? S.me.name : '')}" placeholder="例：鬼レンチャン好き"></div>
+    <div><label class="text-sm text-gray-400">ひとこと自己紹介</label><input id="pb" value="${esc(pr.bio)}" placeholder="例：今回は全問正解するぞ！"></div>
+    <div><label class="text-sm text-gray-400">推し挑戦者</label><input id="po" value="${esc(pr.oshi)}" placeholder="例：挑戦者Aくん"></div>
+    <button type="button" class="btn w-full bg-red-600" data-a="savepf">プロフィールを保存して予想へ進む</button></div>
+    ` + curPredHtml() + statsHtml() + myPastHtml() + xferHtml();
+}
+
+function missHtml() {
+  const ok = new Set(S.ok), out = [];
+  S.ch.forEach((c, i) => {
+    const miss = {};
+    const add = (key, label, n) => { (miss[key] = miss[key] || { key, label, names: [] }).names.push(n); };
+    Object.keys(S.pred).forEach(n => {
+      const d = S.pred[n][i]; if (!d) return;
+      LV(c.mode).forEach(l => { const a = nm(c.songs[l]), g = nm(d.s[l]); if (a && g && a !== g) add(i + ':' + l + ':' + g, LB(l) + '　予想「' + d.s[l] + '」／正解「' + c.songs[l] + '」', n); });
+      if (unkN(c)) { const act = (c.ws || []).map(na).filter(Boolean); if (act.length) (d.ws || []).forEach(x => { const g = na(x); if (g && !act.includes(g)) add('w:' + i + ':' + g, '？？の予想「' + x + '」／正解「' + (c.ws || []).join('、') + '」', n); }); }
+    });
+    const items = Object.values(miss);
+    if (items.length) out.push(`<div class='bg-gray-800 rounded p-3 mb-2'><b class='text-yellow-400'>${esc(c.name)}</b>` + items.map(x => `<div class='flex justify-between items-center gap-2 mt-2 text-sm'><span>${esc(x.label)}<br><span class='text-xs text-gray-400'>${x.names.map(esc).join('、')}</span></span><button type='button' class='btn ${ok.has(x.key) ? 'bg-green-700' : 'bg-gray-700'} text-xs shrink-0' data-a='okt' data-k='${esc(x.key)}'>${ok.has(x.key) ? '○ 正解にした' : '○ 正解にする'}</button></div>`).join('') + `</div>`);
+  });
+  const entered = S.ch.some(c => Object.values(c.songs || {}).some(Boolean) || (c.ws || []).some(Boolean));
+  return `<div class='card mt-4'><h2 class='font-bold text-red-400 mb-1'>📝 ミスの確認（不一致の予想だけ）</h2><p class='text-xs text-gray-400 mb-3'>誤字などは「○ 正解にする」で正解扱いにできます（ポイントに反映されます）。</p>` +
+    (out.length ? out.join('') : `<p class='text-sm text-gray-400'>${entered ? '不一致の予想はありません' : '結果を入力して「結果を決定」を押すと、ここに不一致の予想が出ます'}</p>`) + `</div>`;
+}
+function pastMgmtHtml() {
+  return `<div class='card mt-4'><h2 class='font-bold text-red-400 mb-3'>📚 過去の回の管理</h2>` + (S.past.length ? S.past.map((p, i) => ({ p, i })).reverse().map(o => `<div class='flex items-center justify-between gap-2 bg-gray-800 rounded p-2 mb-2 text-sm'><span>${esc(o.p.date)}　${esc(o.p.title || '')}</span><span class='flex gap-2'><button type='button' class='btn bg-gray-700 text-xs' data-a='pe' data-i='${o.i}'>修正</button><button type='button' class='btn bg-gray-700 text-xs' data-a='pdel' data-i='${o.i}'>削除</button></span></div>`).join('') : `<p class='text-sm text-gray-400'>まだありません</p>`) + `</div>`;
+}
+function playersMgmtHtml() {
+  const ids = Object.keys(P);
+  return `<div class='card mt-4'><h2 class='font-bold text-red-400 mb-1'>👥 参加者の管理</h2><p class='text-xs text-gray-400 mb-3'>削除すると、その人の今回の予想とプロフィールが消え、その名前をまた使えるようになります（端末を変えて入れなくなった人の名前を空けるときにも使えます）。テスト用のデータもここで消せます。</p>` +
+    (ids.length ? ids.map(id => id === pledit ? `<div class='bg-gray-800 rounded p-2 mb-2 space-y-2 text-sm'><input id='pl-n' value='${esc(P[id].name)}' placeholder='名前'><input id='pl-b' value='${esc(P[id].bio)}' placeholder='ひとこと自己紹介'><input id='pl-o' value='${esc(P[id].oshi)}' placeholder='推し挑戦者'><div class='flex gap-2'><button type='button' class='btn bg-red-600 text-xs' data-a='plsave' data-id='${esc(id)}'>保存</button><button type='button' class='btn bg-gray-700 text-xs' data-a='plcancel'>やめる</button></div></div>` : `<div class='flex items-center justify-between gap-2 bg-gray-800 rounded p-2 mb-2 text-sm'><span>${esc(P[id].name)}${(S.hid || []).includes(P[id].name) ? ' 🙈非表示中' : ''}<br><span class='text-xs text-gray-400'>${esc(P[id].bio) || '（未入力）'} ／ 推し: ${esc(P[id].oshi) || '—'}</span></span><span class='flex gap-1'><button type='button' class='btn bg-gray-700 text-xs' data-a='plhide' data-n='${esc(P[id].name)}'>${(S.hid || []).includes(P[id].name) ? '👁 表示' : '🙈 非表示'}</button><button type='button' class='btn bg-gray-700 text-xs' data-a='pledit' data-id='${esc(id)}'>編集</button><button type='button' class='btn bg-gray-700 text-xs' data-a='pldel' data-id='${esc(id)}'>削除</button></span></div>`).join('') : `<p class='text-sm text-gray-400'>まだいません</p>`) + `</div>`;
+}
+function peHtml(p) {
+  const opt = (v, cur, label) => `<option value='${v}' ${v === (cur || '') ? 'selected' : ''}>${label}</option>`;
+  return `<div class='card mb-4 space-y-3'><div class='flex justify-between'><h2 class='font-bold text-red-400'>✏️ 過去の回の修正</h2><button type='button' class='btn bg-gray-800 text-xs' data-a='pecl'>← 戻る</button></div>
+    <div class='grid grid-cols-2 gap-2'><input type='date' id='pe-date' value='${esc(toIn(p.date))}'><input id='pe-title' value='${esc(p.title)}' placeholder='回の名前'></div>
+    <select id='pe-win'>${opt('', p.win, '勝った軍：自動（合計で判定）')}${opt('chi', p.win, '千鳥軍')}${opt('kam', p.win, 'かまいたち軍')}${opt('draw', p.win, '引き分け')}</select>` +
+    p.ch.map((c, i) => `<div class='bg-gray-800 rounded p-3 space-y-2'><input id='pe-n${i}' value='${esc(c.name)}'><select id='pe-t${i}'>${opt('', c.team, '軍：未定')}${opt('chi', c.team, '千鳥軍')}${opt('kam', c.team, 'かまいたち軍')}</select>` +
+      [...Array(unkN(c)).keys()].map(k => `<input id='pe-w${i}_${k}' value='${esc((c.ws || [])[k])}' placeholder='？？の正体${k + 1}'>`).join('') +
+      `<select id='pe-r${i}'>${[...Array(11).keys()].map(k => `<option value='${k}' ${c.real == k ? 'selected' : ''}>${k} レンチャン</option>`).join('')}</select><div class='grid md:grid-cols-2 gap-2'>${LV(c.mode).map(l => `<div class='flex items-center gap-2'><span class='w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-900 rounded py-1'>${LB(l)}</span><input id='pe-s${i}_${l}' value='${esc(c.songs[l])}' list='songs-list' autocomplete='off'></div>`).join('')}</div></div>`).join('') +
+    `<div><p class='text-sm text-gray-400 mb-1'>この回の参加者（押すと、この回の予想とランキングから外します）</p>${Object.keys(p.pred).map(n => `<button type='button' class='btn bg-gray-700 text-xs mr-1 mb-1' data-a='ppdel' data-n='${esc(n)}'>🗑 ${esc(n)}</button>`).join('')}</div>
+    <button type='button' class='btn w-full bg-yellow-600 py-3' style='color:#030712' data-a='pesv'>💾 修正を保存してランキングを再計算</button></div>`;
+}
+async function savePast(p) {
+  const ok = new Set(p.ok || []), names = Object.keys(p.pred);
+  p.rank = names.map(n => ({ n, ...scR(p.ch, p.pred, p.win, true, ok, n) })).sort((a, b) => b.t - a.t);
+  try {
+    await tmo(setDoc(doc(dbA, 'past', p.id), { date: p.date, title: p.title || '', win: p.win || '', ts: p.ts || Date.now(), ch: p.ch, ok: p.ok || [], players: names.map(n => ({ n, d: p.pred[n] })), rank: p.rank }));
+    return true;
+  } catch (e) { fail(e); return false; }
+}
+function rAdmin() {
+  const el = $('tab-admin');
+  if (!admin) {
+    el.innerHTML = `<div class='card text-center space-y-3'><h2 class='font-bold text-red-400'>🔒 管理人専用ページ</h2><p class='text-sm text-gray-400'>管理人のパスワードを入力してください。</p><div class='max-w-xs mx-auto space-y-3'><input type='password' id='pw' class='text-center' placeholder='パスワード'><button type='button' class='btn w-full bg-red-600' data-a='login'>ログイン</button></div></div>`;
+    return;
+  }
+  if (pe >= 0 && S.past[pe]) { el.innerHTML = peHtml(S.past[pe]) + songListHtml(); return; }
+  const opt = (v, cur, label) => `<option value='${v}' ${v === (cur || '') ? 'selected' : ''}>${label}</option>`;
+  el.innerHTML =
+    `<div class='card mb-4'><div class='flex justify-between mb-3'><h2 class='font-bold text-red-400'>⚙️ 今回の回と挑戦者（${S.ch.length}人）</h2><button type='button' class='btn bg-gray-800 text-xs' data-a='logout'>🔒 ログアウト</button></div>
+    <div class='grid grid-cols-2 gap-2 mb-3'><div><label class='text-xs text-gray-400'>放送日</label><input type='date' id='adate' value='${esc(S.airDate)}'></div><div><label class='text-xs text-gray-400'>回の名前</label><input id='atitle' value='${esc(S.title)}' placeholder='${esc(roundTitle())}（空なら自動）'></div></div>
+    ${S.deadlineMs ? '' : `<div class='text-sm text-yellow-300 border border-yellow-600 rounded p-2 mb-3'>⚠️ 締切が未設定です。このままだと、放送中も予想を変えられて、みんなの予想も結果入力まで公開されません。</div>`}<div class='mb-3'><label class='text-xs text-gray-400'>みんなの予想の見せ方（「保存」を押すと反映）</label><select id='apub'>${opt('', S.pub, '自動（締切後に公開）')}${opt('show', S.pub, '今すぐ公開する')}${opt('hide', S.pub, '非表示にする（管理人だけ見える）')}</select></div><div class='mb-3'><label class='text-xs text-gray-400'>予想の締切（この時刻を過ぎると、入力できなくなり、みんなの予想が公開されます）</label><input type='datetime-local' id='adl' value='${esc(S.deadline)}'></div>
+    <p class='text-xs text-gray-400 mb-2'>名前は敬称略で。分からない人は「？？」と入力します（例：ほいけんた&？？ ／ ？？&？？）。</p><p class='text-xs text-gray-400 mb-2'>軍が決まっていない挑戦者は「未定」にしておくと、予想する人が所属の軍を予想できます（当たると${PT_TM}pt）。放送後に軍を選んで「結果を決定」を押してください。</p>` +
+    S.ch.map((c, i) => `<div class='bg-gray-800 rounded p-2 mb-2 space-y-2'><div class='flex gap-2'><input id='an${i}' value='${esc(c.name)}' placeholder='名前（敬称略）'><select id='am${i}' style='width:7rem'>${opt('normal', c.mode, 'ノーマル')}${opt('hard', c.mode, '鬼ハード')}</select></div><select id='at${i}' style='width:14rem'>${opt('', teamOf(c, i), '軍：未定（予想させる）')}${opt('chi', teamOf(c, i), '千鳥軍')}${opt('kam', teamOf(c, i), 'かまいたち軍')}</select><div><label class='text-xs text-gray-400'>この挑戦者だけの締切（空なら、上の全体の締切）</label><input type='datetime-local' id='adl${i}' value='${esc(c.dl)}'></div></div>`).join('') +
+    `<div class='flex gap-2 items-center'><button type='button' class='btn bg-gray-700 text-xl px-4' data-a='rmch'>－</button><button type='button' class='btn bg-gray-700 text-xl px-4' data-a='addch'>＋</button><button type='button' class='btn bg-red-600' data-a='savech'>保存</button></div></div>
+    <div class='card space-y-4'><h2 class='font-bold text-red-400'>📺 放送結果の入力 ＆ 採点</h2>
+    <div><label class='text-xs text-gray-400'>勝った軍（空なら、軍ごとの合計レンチャン数で自動判定）</label><select id='awin'>${opt('', S.win, '自動（合計で判定）')}${opt('chi', S.win, '千鳥軍')}${opt('kam', S.win, 'かまいたち軍')}${opt('draw', S.win, '引き分け')}</select></div>` +
+    S.ch.map((c, i) => `<div class='bg-gray-800 rounded p-3 space-y-2'><div class='flex justify-between items-center gap-2'><b class='text-yellow-400'>${esc(c.name)}</b><button type='button' class='btn text-xs ${c.done ? 'bg-green-700' : 'bg-gray-700'}' data-a='cdone' data-i='${i}'>${c.done ? '✅ 確定済み（押すと取り消し）' : 'この挑戦者を確定する'}</button></div>` +
+      [...Array(unkN(c)).keys()].map(k => `<input id='aw${i}_${k}' value='${esc((c.ws || [])[k])}' placeholder='${unkN(c) > 1 ? '？？の正体' + (k + 1) + '（敬称略・順不同）' : '？？の正体（敬称略）'}'>`).join('') +
+      `<select id='ar${i}'>${[...Array(11).keys()].map(k => `<option value='${k}' ${c.real == k ? 'selected' : ''}>実際: ${k} レンチャン</option>`).join('')}</select>
+      <div class='grid md:grid-cols-2 gap-2'>${LV(c.mode).map(l => `<div class='flex items-center gap-2'><span class='w-16 shrink-0 text-xs text-center text-yellow-400 bg-gray-900 rounded py-1'>${LB(l)}</span><input id='as${i}_${l}' value='${esc(c.songs[l])}' list='songs-list' autocomplete='off' placeholder='曲名/アーティスト名（wiki表記）'></div>`).join('')}</div></div>`).join('') +
+    `<button type='button' class='btn w-full bg-yellow-600 py-3 text-lg' style='color:#030712' data-a='calc'>🎯 結果を決定 ＆ スコア集計！</button></div>` +
+    missHtml() +
+    `<div class='card mt-4'><button type='button' class='btn w-full bg-gray-800' data-a='reset'>📚 今回の回を過去の回に保存して、新しい回を始める</button></div>` +
+    pastMgmtHtml() + playersMgmtHtml() + songListHtml();
+}
+
+function xferHtml() {
+  return `<div class='card mt-4 space-y-3'><h2 class='font-bold text-yellow-400'>📱 別のブラウザ・端末へ引っ越す</h2><p class='text-xs text-gray-400'>名前・プロフィール・予想・ゲームポイントを、そのまま別のブラウザで使えます。コードは、他の人に見せないでください。</p>
+    <div class='space-y-2'><p class='text-sm font-bold'>① 今使っているブラウザで</p><button type='button' class='btn w-full bg-gray-700' data-a='xfmk'>📤 引き継ぎコードを作る</button>${xfCode ? `<input id='xfout' readonly value='${esc(xfCode)}'><button type='button' class='btn w-full bg-gray-700 text-sm' data-a='xfcp'>コードをコピーする</button>` : ''}</div>
+    <div class='space-y-2'><p class='text-sm font-bold'>② 新しいブラウザで</p><input id='xfin' placeholder='ここに引き継ぎコードを貼り付ける' autocomplete='off'><button type='button' class='btn w-full bg-red-600' data-a='xfgo'>📥 引き継ぐ</button><p class='text-xs text-gray-400'>このブラウザの今の名前は、コードの名前に置き換わります。</p></div></div>`;
+}
+function statsFor(name) {
+  let rounds = 0, pts = 0, ranks = [], ex = 0, near = 0, tot = 0;
+  S.past.forEach(p => {
+    const rk = withRk((p.rank || []).map(x => ({ ...x }))), me = rk.find(x => x.n === name); if (!me) return;
+    rounds++; pts += me.t || 0; ranks.push(me.rk);
+    const pr = (p.pred || {})[name] || [];
+    (p.ch || []).forEach((c, i) => { const d = pr[i]; if (!d || typeof d.r !== 'number') return; tot++; if (d.r === c.real) ex++; else if (Math.abs(d.r - c.real) === 1) near++; });
+  });
+  return { rounds, pts, best: ranks.length ? Math.min(...ranks) : 0, avg: ranks.length ? ranks.reduce((s, v) => s + v, 0) / ranks.length : 0, ex, near, tot };
+}
+const pct = (x, t) => t ? Math.round(x / t * 100) + '%' : '—';
+function statsHtml() {
+  if (!hasName()) return '';
+  const s = statsFor(S.me.name); if (!s.rounds) return '';
+  return `<div class='card mt-4'><h2 class='font-bold text-yellow-400 mb-2'>📊 あなたの通算成績</h2><div class='grid grid-cols-2 gap-2 text-sm'><p>参加 <b>${s.rounds}</b>回</p><p>累計 <b>${s.pts}</b>pt</p><p>最高順位 <b>${s.best}</b>位</p><p>平均順位 <b>${s.avg.toFixed(1)}</b>位</p><p>レンチャン数ぴったり <b>${s.ex}</b>/${s.tot}（${pct(s.ex, s.tot)}）</p><p>±1以内 <b>${s.ex + s.near}</b>/${s.tot}（${pct(s.ex + s.near, s.tot)}）</p></div></div>`;
+}
+function allStatsHtml() {
+  const ns = new Set(); S.past.forEach(p => (p.rank || []).forEach(x => ns.add(x.n)));
+  const rows = [...ns].map(n => ({ n, ...statsFor(n) })).filter(x => x.rounds).sort((x, y) => y.rounds - x.rounds || y.ex / (y.tot || 1) - x.ex / (x.tot || 1)).slice(0, 30);
+  if (!rows.length) return '';
+  return `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-2'>📊 みんなの通算成績</h2><p class='text-xs text-gray-400 mb-2'>参加回数の多い順。ぴ＝レンチャン数ぴったり、±＝±1以内</p>${rows.map(x => `<div class='flex justify-between text-xs py-1 border-b border-gray-800'><span>${esc(x.n)}　${x.rounds}回・平均${x.avg.toFixed(1)}位</span><span>ぴ${pct(x.ex, x.tot)}　±${pct(x.ex + x.near, x.tot)}</span></div>`).join('')}</div>`;
+}
+function curPredHtml() {
+  const n = S.me.name, p = S.pred[n];
+  if (!hasName()) return '';
+  let body;
+  if (!p) body = `<p class='text-sm text-gray-400'>まだ今回の予想がありません。「🎯 予想入力」から入力してください</p>`;
+  else {
+    const g = { chi: [], kam: [], none: [] };
+    S.ch.forEach((c, i) => { const t0 = teamOf(c, i), d = p[i]; g[t0 || (d && d.tm) || 'none'].push({ c, i, guess: !t0 }); });
+    body = ['chi', 'kam', 'none'].filter(k => g[k].length).map(k => `<div class='mb-2'><p class='font-bold text-red-300 text-sm'>${TEAMS[k]}</p>` + g[k].map((it, j) => { const d = p[it.i]; return `<p class='text-sm pl-2'>${(ORD[j] || (j + 1)) + '人目'}　${d ? '<b class="text-yellow-400">' + d.r + 'レンチャン</b>' : '<span class="text-gray-500">未入力</span>'}　<span class='text-xs text-gray-400'>${esc(dn(it.c))}${it.guess && k !== 'none' ? '（軍は予想）' : ''}</span></p>`; }).join('') + `</div>`).join('');
+  }
+  return `<div class='card mt-4'><h2 class='font-bold text-yellow-400 mb-1'>🎯 あなたの現在の予想（${esc(roundTitle())}）</h2><p class='text-xs text-gray-500 mb-2'>${fmtTs(n)}</p>${body}</div>`;
+}
+function myPastHtml() {
+  const n = S.me.name;
+  const rows = S.past.filter(p => p.pred[n]).reverse();
+  return `<div class='card mt-4'><h2 class='font-bold text-yellow-400 mb-3'>📖 ${esc(n)} の過去の予想</h2>` +
+    (rows.length ? rows.map(p => {
+      const rr = withRk(p.rank.map(x => ({ ...x }))), m = rr.find(x => x.n === n) || { t: 0, r: 0, s: 0, rk: '-' }, wp = winOf(p.pred[n]);
+      return `<details class='bg-gray-800 rounded p-3 mb-2 text-sm'><summary class='cursor-pointer'><b class='text-yellow-400'>${esc(p.date)}　${esc(p.title || '')}</b> ${m.rk}位/${p.rank.length}人 ${m.t}pt <span class='text-xs text-gray-400'>(数${m.r}＋曲${m.s}${m.w ? `＋人${m.w}` : ''}${m.m ? `＋軍${m.m}` : ''})</span></summary>` +
+        (wp ? `<p class='mt-2'>🏁 軍の予想: ${WINL[wp]}${p.win === wp ? ' ✅' : ''}</p>` : '') +
+        p.ch.map((c, i) => { const d = p.pred[n][i] || { r: 0, s: {}, c: '' }; return `<div class='mt-2'><b>${esc(dn(c, i))}</b> 予想${d.r} / 正解${c.real}${d.c ? `<p class='text-gray-400'>💬 ${esc(d.c)}</p>` : ``}${whoLine(c, d)}<div class='grid md:grid-cols-2 gap-x-3'>${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = songOk(c, i, l, d.s[l], new Set(p.ok || [])); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`; }).join('') + `</details>`;
+    }).join('') : `<p class='text-sm text-gray-400'>まだ過去の回の予想はありません</p>`) + `</div>`;
+}
+
+function rPast() {
+  const el = $('tab-past');
+  const hdr = p => esc(p.date) + '　' + esc(p.title || '');
+  const rkRow = (x, i) => `<div class='flex justify-between bg-gray-800 rounded p-2 mb-2'><span>${x.rk}位 ${esc(x.n)}</span><span class='text-yellow-400 font-bold'>${x.t}pt <span class='text-xs text-gray-400'>(数${x.r}＋曲${x.s}${x.w ? `＋人${x.w}` : ''}${x.m ? `＋軍${x.m}` : ''})</span></span></div>`;
+  if (po >= 0 && S.past[po]) {
+    const p = S.past[po], names = Object.keys(p.pred);
+    if (!p.pred[pp]) pp = names[0] || '';
+    const cell = (n, i) => {
+      const c = p.ch[i], d = p.pred[n][i] || { r: 0, s: {}, c: '' };
+      return `<div class='bg-gray-800 rounded p-3 mb-2 text-sm'><div class='flex justify-between'><b>${esc(pm === 'ch' ? n : dn(c, i))}</b><span class='text-yellow-400'>${d.r}レンチャン（正解${c.real}）</span></div>${d.c ? `<p class='text-gray-400'>💬 ${esc(d.c)}</p>` : ``}${whoLine(c, d)}<div class='grid md:grid-cols-2 gap-x-3 mt-1'>${LV(c.mode).filter(l => d.s[l]).map(l => { const ok = songOk(c, i, l, d.s[l], new Set(p.ok || [])); return `<div>${LB(l)} ${esc(d.s[l])}${ok ? ' ✅' : ''}</div>`; }).join('')}</div></div>`;
+    };
+    const result = groups(p.ch).map(g => `<div class='mb-3'><div class='text-red-300 font-bold'>${g.label}</div>` + g.items.map(it => {
+      const c = it.c, ls = LV(c.mode).slice(0, Math.min(c.real + 1, 10));
+      return `<div class='bg-gray-800 rounded p-2 mt-2 text-sm'><div><b>${slot(it)}</b>（${esc(dn(c, it.i))}）　${c.real}レンチャン</div>` +
+        ls.map((l, j) => `<div class='${j === c.real ? 'text-red-300' : ''}'>${ORD[j]}曲目　${esc(c.songs[l]) || '（未入力）'} <span class='text-xs text-gray-400'>${LB(l)}</span>${j === c.real ? ' ❌' : ''}</div>`).join('') + `</div>`;
+    }).join('') + `</div>`).join('');
+    let h = `<button type='button' class='btn bg-gray-800 mb-3' data-a='pback'>← 過去の回の一覧へ</button>` +
+      `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-3'>📺 ${hdr(p)}　結果</h2>${result}</div>` +
+      `<div class='card mb-4'><h2 class='font-bold text-yellow-400 mb-1'>🏆 この回のランキング</h2><p class='text-xs text-gray-400 mb-3'>この回だけの点数です</p>` + (p.rank.length ? withRk(p.rank.map(x => ({ ...x }))).map(rkRow).join('') : `<p class='text-sm text-gray-400'>予想者なし</p>`) + `</div>` +
+      winCard(p.pred, p.win || '');
+    h += `<div class='card'><h2 class='font-bold text-yellow-400 mb-3'>👥 この回のみんなの予想</h2><div class='flex gap-2 mb-3'><button type='button' class='btn ${pm === 'ch' ? 'bg-red-600' : 'bg-gray-800'}' data-a='pm' data-v='ch'>挑戦者別</button><button type='button' class='btn ${pm === 'pp' ? 'bg-red-600' : 'bg-gray-800'}' data-a='pm' data-v='pp'>予想者別</button></div>`;
+    if (!names.length) h += `<p class='text-sm text-gray-400'>予想はありません</p>`;
+    else if (pm === 'ch') h += `<div class='flex gap-2 mb-3 overflow-x-auto'>${p.ch.map((c, i) => `<button type='button' class='btn shrink-0 ${pc === i ? 'bg-red-600' : 'bg-gray-800'}' data-a='pc' data-i='${i}'>${esc(dn(c, i))}</button>`).join('')}</div>` + names.map(n => cell(n, pc)).join('');
+    else h += `<div class='flex gap-2 mb-3 overflow-x-auto'>${names.map(n => `<button type='button' class='btn shrink-0 ${pp === n ? 'bg-red-600' : 'bg-gray-800'}' data-a='pq' data-n='${esc(n)}'>${esc(n)}</button>`).join('')}</div>` + p.ch.map((c, i) => cell(pp, i)).join('');
+    el.innerHTML = h + `</div>`;
+    return;
+  }
+  el.innerHTML = totalCard() + `<div class='card'><h2 class='font-bold text-yellow-400 mb-3'>📚 過去の回</h2>` +
+    (S.past.length ? S.past.map((p, i) => ({ p, i })).reverse().map(o => `<div class='bg-gray-800 rounded p-3 mb-3 text-sm'><div class='font-bold text-yellow-400 mb-2'>${hdr(o.p)}</div>` +
+      groups(o.p.ch).map(g => `<div class='mb-2'><div class='text-red-300 font-bold'>${g.label}</div>` + g.items.map(it => `<div>${slot(it)}　${it.c.real}レンチャン</div>`).join('') + `</div>`).join('') +
+      `<button type='button' class='btn bg-gray-700 text-xs mt-1' data-a='po' data-i='${o.i}'>詳細</button></div>`).join('') : `<p class='text-sm text-gray-400'>まだ保存された回はありません</p>`) + `</div>`;
+}
+function calcDl() { const v = S.ch.map(dlOf); S.deadlineMs = v.length ? (v.every(Boolean) ? Math.max(...v) : 0) : glMs(); }
+function readAdmin() {
+  const dt = $('adate'), ti = $('atitle'), wn = $('awin');
+  if (dt) S.airDate = dt.value;
+  if (ti) S.title = ti.value.trim();
+  if (wn) S.win = wn.value;
+  const pb = $('apub'); if (pb) S.pub = pb.value;
+  const dl = $('adl'); if (dl) S.deadline = dl.value;
+  S.ch.forEach((c, i) => {
+    const n = $('an' + i), m = $('am' + i), tm = $('at' + i), r = $('ar' + i), old = c.mode;
+    if (n) c.name = n.value.trim() || c.name;
+    if (tm) c.team = tm.value;
+    if (r) c.real = +r.value;
+    const k = unkN(c), arr = []; let any = false;
+    for (let j = 0; j < k; j++) { const e = $('aw' + i + '_' + j); if (e) { arr[j] = e.value.trim(); any = true; } }
+    if (any) c.ws = [...Array(k).keys()].map(j => arr[j] || '');
+    if (m) c.mode = m.value;
+    const cd = $('adl' + i); if (cd) c.dl = cd.value;
+    if (c.mode === old) LV(c.mode).forEach(l => { const e = $('as' + i + '_' + l); if (e) c.songs[l] = e.value.trim(); });
+  });
+  calcDl();
+}
+let saveState = 'saved', saveTimer = null;
+function paintSave() {
+  const el = document.getElementById('savest'); if (!el) return;
+  const m = { saved: ['✅ 保存済み', 'text-green-400'], dirty: ['✏️ 入力中…（自動で保存します）', 'text-yellow-400'], saving: ['⏳ 保存中…', 'text-gray-400'], error: ['⚠️ 保存できていません（通信を確認してください）', 'text-red-400'] }[saveState];
+  el.textContent = m[0]; el.className = 'text-xs text-center mb-2 ' + m[1];
+}
+function markDirty() { saveState = 'dirty'; paintSave(); clearTimeout(saveTimer); saveTimer = setTimeout(() => savePred(false), 1500); }
+async function savePred(manual) {
+  clearTimeout(saveTimer);
+  if (!hasName()) { if (manual) { toast('先にプロフィールで名前を入力してください'); show('profile'); } return false; }
+  if (locked()) { if (manual) toast('締切を過ぎているので、変更できません'); return false; }
+  if (takenBy(S.me.name)) { toast('この名前は他の人が使っています。プロフィールで名前を変えてください'); return false; }
+  saveState = 'saving'; paintSave();
+  try {
+    const old = S.pred[S.me.name] || [];
+    const pr = mine().map((x, i) => { const c = S.ch[i]; if (!(c && lockedC(c))) return x; const o = old[i] || null; return i === 0 && o ? { ...o, ...(x.win ? { win: x.win } : {}) } : o; });
+    await tmo(setDoc(doc(db, 'players', pid(S.me.name)), { name: S.me.name, pred: pr, rid: S.rid, owner: L.dev, ...uidFor(S.me.name), ts: Date.now() }, { merge: true }));
+    save(); saveState = 'saved'; paintSave();
+    if (manual) toast('予想を保存しました！');
+    return true;
+  } catch (e) { saveState = 'error'; paintSave(); fail(e); return false; }
+}
+// ---------- 4. 曲名の入力候補（過去の回に入力された曲名） ----------
+function songListHtml() {
+  const seen = new Set(), out = [];
+  const add = x => { const k = nm(x); if (x && !seen.has(k)) { seen.add(k); out.push(x); } };
+  [...S.ch, ...S.past.flatMap(p => p.ch || [])].forEach(c => Object.values(c.songs || {}).forEach(add));
+  SONGS.forEach(add);
+  return `<datalist id='songs-list'>${out.slice(0, 3000).map(x => `<option value='${esc(x)}'>`).join('')}</datalist>`;
+}
+// 鬼レンチャン挑戦者データ（wiki「挑戦者一覧」2026/11/01更新分。2026/5/10以降は番組内の回数に合わせてwikiより+1）[p=パイロット版 r=レギュラー, 回名, 日付, [[軍,順位,名前,記録,備考]]]
+const DB = [["p","第1回","2020-10-09",[["千鳥軍",1,"May J.",10,""],["千鳥軍",2,"ほいけんた",5,""],["千鳥軍",3,"後上翔太(純烈)",3,""],["千鳥軍",4,"長田庄平(チョコレートプラネット)",1,""],["千鳥軍",5,"狩野英孝",0,""],["かまいたち軍",1,"丘みどり",8,""],["かまいたち軍",2,"徳永ゆうき",0,""],["かまいたち軍",3,"ずま(虹色侍)",5,""],["かまいたち軍",4,"エミリン",4,""],["かまいたち軍",5,"亜生(ミキ)",2,""],["関東ローカル",0,"ゆめっち(3時のヒロイン)",0,""],["関東ローカル",0,"北本莉斗",3,""],["関東ローカル",0,"木村壮紫",0,""],["事前特番",0,"花村想太(Da-iCE)",3,"放送日は同年10月3日"]]],["p","第2回","2021-02-12",[["千鳥軍",1,"丘みどり",8,""],["千鳥軍",2,"ほしのディスコ(パーパー)",9,""],["千鳥軍",3,"Mr.シャチホコ",3,""],["千鳥軍",4,"サーヤ(ラランド)",3,""],["千鳥軍",5,"亜生(ミキ)",2,""],["かまいたち軍",1,"荒牧陽子",10,""],["かまいたち軍",2,"島谷ひとみ",10,""],["かまいたち軍",3,"柏木ひなた(私立恵比寿中学)",4,""],["かまいたち軍",4,"河合郁人(A.B.C-Z)",1,""],["かまいたち軍",5,"徳永ゆうき",4,""],["事前特番",0,"斎藤司(トレンディエンジェル)",2,"放送日は同年2月6日"],["事前特番",0,"沢田知可子",4,""],["事前特番",0,"段原瑠々(Juice=Juice)",4,""],["事前特番",0,"中孝介",3,""],["事前特番",0,"近藤くみこ(ニッチェ)",0,""]]],["p","第3回","2021-07-04",[["千鳥軍",1,"丘みどり",10,""],["千鳥軍",2,"華原朋美",3,""],["千鳥軍",3,"Mr.シャチホコ",8,""],["千鳥軍",4,"河合郁人(A.B.C-Z)",2,""],["千鳥軍",5,"徳永ゆうき",4,""],["かまいたち軍",1,"chay",10,""],["かまいたち軍",2,"ビューティーこくぶ",9,""],["かまいたち軍",3,"R(元愛内里菜)",3,""],["かまいたち軍",4,"丸山礼",2,""],["かまいたち軍",5,"稲田直樹(アインシュタイン)",0,""],["再放送",0,"星乃",9,"放送日は同年12月26日"]]],["p","第4回","2021-12-29",[["千鳥軍",1,"Mr.シャチホコ",6,""],["千鳥軍",2,"華原朋美",7,""],["千鳥軍",3,"富田鈴花(日向坂46)",9,""],["千鳥軍",4,"マルシア",4,""],["千鳥軍",5,"徳永ゆうき",0,""],["かまいたち軍",1,"荒牧陽子",10,""],["かまいたち軍",2,"BENI",7,""],["かまいたち軍",3,"島谷ひとみ",8,"鬼ハードモード"],["かまいたち軍",4,"丸山礼",5,""],["かまいたち軍",5,"濵田崇裕(ジャニーズWEST)",0,""]]],["r","第1回","2022-05-01",[["千鳥軍",1,"丘みどり",9,"鬼ハードモード"],["千鳥軍",2,"Mr.シャチホコ",7,""],["千鳥軍",3,"津田篤宏(ダイアン)",3,""],["かまいたち軍",1,"木山裕策",6,""],["かまいたち軍",2,"河邑ミク",10,""],["かまいたち軍",3,"徳永ゆうき",3,""]]],["r","第2回","2022-05-22",[["千鳥軍",1,"BENI",5,""],["千鳥軍",2,"マルシア",3,""],["千鳥軍",3,"河合郁人(A.B.C-Z)",2,""],["かまいたち軍",1,"KAY-I(ROYALcomfort)",6,"かまいたち推薦枠"],["かまいたち軍",2,"misono",1,""],["かまいたち軍",3,"濵田崇裕(ジャニーズWEST)",9,""]]],["r","第3回","2022-06-05",[["千鳥軍",1,"よよよちゃん",7,""],["千鳥軍",2,"徳永ゆうき",3,""],["千鳥軍",3,"藤川千愛",3,"千鳥推薦枠"],["かまいたち軍",1,"島谷ひとみ",2,"鬼ハードモード"],["かまいたち軍",2,"神奈月",2,""],["かまいたち軍",3,"エハラマサヒロ",6,""]]],["r","第4回","2022-06-26",[["千鳥軍",1,"徳永ゆうき",6,"イージーモード"],["千鳥軍",2,"河合郁人(A.B.C-Z)",4,"イージーモード"],["千鳥軍",3,"津田篤宏(ダイアン)",2,"イージーモード"],["かまいたち軍",1,"金ちゃん(鬼越トマホーク)",10,"イージーモード"],["かまいたち軍",2,"斉藤慎二(ジャングルポケット)",3,"イージーモード"],["かまいたち軍",3,"レイザーラモンRG(レイザーラモン)",0,"イージーモード"]]],["r","第5回","2022-07-03",[["千鳥軍",1,"麻倉未稀",6,""],["千鳥軍",2,"chay",9,"鬼ハードモード"],["かまいたち軍",1,"荒牧陽子",6,"鬼ハードモード"],["かまいたち軍",2,"高橋真麻",10,""]]],["r","第6回","2022-07-31",[["千鳥軍",1,"富田鈴花(日向坂46)",9,""],["千鳥軍",2,"友近",0,""],["千鳥軍",3,"亜生(ミキ)",4,""],["かまいたち軍",1,"hitomi",6,""],["かまいたち軍",2,"柏木ひなた(私立恵比寿中学)",3,""],["かまいたち軍",3,"木下隆行(TKO)",3,""]]],["r","第8回","2022-09-04",[["千鳥軍",1,"加護亜依",6,""],["千鳥軍",2,"狩野英孝",0,""],["かまいたち軍",1,"坂本冬休み",3,""],["かまいたち軍",2,"LiLiCo",1,""],["こぶしレンチャン(ローカル枠)",0,"徳永ゆうき",3,"サビだけカラオケ復帰"]]],["r","第9回","2022-09-25",[["千鳥軍",1,"丘みどり",5,"鬼ハードモード"],["千鳥軍",2,"ほいけんた",10,""],["千鳥軍",3,"もっと木山",4,""],["かまいたち軍",1,"細シャ",8,""],["かまいたち軍",2,"松浦航大",10,""],["かまいたち軍",3,"ゆめちゃん",3,""]]],["r","第10回","2022-10-23",[["千鳥軍",1,"市川由紀乃",8,""],["千鳥軍",2,"炎鵬関",4,""],["千鳥軍",3,"金ちゃんパパ",2,"昭和歌謡モード"],["かまいたち軍",1,"nanami",10,""],["かまいたち軍",2,"翔猿関",2,""],["かまいたち軍",3,"錦野旦",3,"昭和歌謡モード"]]],["r","第11回","2022-11-20",[["千鳥軍",1,"よよよちゃん",9,""],["千鳥軍",2,"神山智洋(ジャニーズWEST)",7,""],["かまいたち軍",1,"島谷ひとみ",10,""],["かまいたち軍",2,"りんごちゃん",5,""]]],["r","第12回","2023-01-08",[["千鳥軍",1,"華原朋美",9,""],["千鳥軍",2,"麻倉未稀",7,""],["千鳥軍",3,"ほいけんた",3,"鬼ハードモード"],["かまいたち軍",1,"濵田崇裕(ジャニーズWEST)",2,""],["かまいたち軍",2,"齊藤京子(日向坂46)",8,""],["かまいたち軍",3,"徳永ゆうき",10,""]]],["r","第13回","2023-01-22",[["千鳥軍",1,"浅岡雄也(FIELD OF VIEW)",4,"得点2倍"],["千鳥軍",2,"保田圭",9,""],["かまいたち軍",1,"小野正利",6,""],["かまいたち軍",2,"ササキオサム(MOON CHILD)",8,""],["かまいたち軍",3,"矢口真里",6,""]]],["r","第15回","2023-02-19",[["千鳥軍",1,"Hiro(MY FIRST STORY)",4,""],["千鳥軍",2,"河合郁人(A.B.C-Z)",7,""],["千鳥軍",3,"金ちゃんパパ",0,"昭和歌謡モード"],["かまいたち軍",1,"彩青",0,""],["かまいたち軍",2,"河邑ミク",5,"鬼ハードモード"],["かまいたち軍",3,"池田裕楽(STU48)",8,""]]],["r","第18回","2023-03-26",[["千鳥軍",1,"丘みどり",4,"鬼ハードモード"],["千鳥軍",2,"富田鈴花(日向坂46)",9,""],["千鳥軍",3,"りんごちゃん",4,""],["かまいたち軍",1,"ほい航大",3,"鬼ハードモード"],["かまいたち軍",2,"KAY-I(ROYALcomfort)",10,""],["かまいたち軍",3,"Mr.シャチホコ",6,""]]],["r","第19回","2023-04-16",[["千鳥軍",1,"神山智洋(ジャニーズWEST)",8,""],["千鳥軍",2,"中山エミリ",7,""],["千鳥軍",3,"せいや(霜降り明星)",4,""],["かまいたち軍",1,"細魚",8,""],["かまいたち軍",2,"ササキオサム(MOON CHILD)",10,""],["かまいたち軍",3,"徳永ゆうき",4,"鬼ハードモード"]]],["r","第20回","2023-04-30",[["千鳥軍",1,"與那城奨(JO1)",6,""],["千鳥軍",2,"川畑泰史(吉本新喜劇)",7,""],["かまいたち軍",1,"柏木ひなた",9,""],["かまいたち軍",2,"マルシア",3,""]]],["r","第21回","2023-05-21",[["千鳥軍",1,"chay",3,"鬼ハードモード"],["千鳥軍",2,"坂本冬休み",7,""],["千鳥軍",3,"津田篤宏(ダイアン)",2,""],["かまいたち軍",1,"竹中雄大(Novelbright)",2,""],["かまいたち軍",2,"徳永ゆうき&彩青",6,"タッグモード"],["かまいたち軍",3,"トモ(テツandトモ)",6,""]]],["r","第22回","2023-06-04",[["千鳥軍",1,"ほい航大",10,"メドレーモード"],["千鳥軍",2,"よよよちゃん",7,""],["かまいたち軍",1,"荒牧陽子",9,"メドレーモード"],["かまいたち軍",2,"メカ真麻",8,"鬼ハードモード"],["鬼越軍",0,"ビューティーこくぶ",3,"事前特番、放送日は同年6月1日(5月31日深夜)"],["コットン軍",0,"島太星(NORD)",4,""]]],["r","第24回","2023-07-02",[["千鳥軍",0,"加護亜依",6,""],["かまいたち軍",0,"佐野晶哉(Aぇ! group)",9,""]]],["r","第25回","2023-07-16",[["千鳥軍",1,"BENI",10,""],["千鳥軍",2,"佐藤仁美",0,""],["かまいたち軍",1,"島谷ひとみ",2,"鬼ハードモード"],["かまいたち軍",2,"林健(ギャロップ)",3,""]]],["r","FNS27時間テレビ2023","2023-07-22",[["千鳥軍",1,"華原朋美&丘みどり(アンチかまいたちタッグ)",10,"タッグモード"],["千鳥軍",2,"齊藤京子&富田鈴花(日向坂タッグ)",7,"タッグモード"],["千鳥軍",3,"徳永ゆうき&彩青(若手演歌タッグ)",4,"タッグモード"],["かまいたち軍",1,"島谷ひとみ&荒牧陽子(ノブ反逆同盟)",1,"タッグモード"],["かまいたち軍",2,"ほいけんた&ほい航大(ほい一門師弟タッグ)",9,"タッグモード"],["かまいたち軍",3,"神山智洋&濵田崇裕(阿呆×熱語り)",10,"タッグモード"],["？？",0,"ペリー・キー",0,""]]],["r","第26回","2023-08-06",[["千鳥軍",1,"池田裕楽(STU48)",9,""],["千鳥軍",2,"加藤史帆(日向坂46)",3,""],["かまいたち軍",1,"松田里奈(櫻坂46)",7,""],["かまいたち軍",2,"松本明子",6,""]]],["r","第28回","2023-08-27",[["千鳥軍",1,"矢口真里&保田圭(モー娘。OGタッグ)",5,"タッグモード"],["千鳥軍",2,"竹中雄大(Novelbright)",10,""],["千鳥軍",3,"浅岡雄也(FIELD OF VIEW)",2,""],["かまいたち軍",1,"Mr.シャチホコ&細魚(W木山)",8,"タッグモード"],["かまいたち軍",2,"マルシア&misono(水分系タッグ)",7,"タッグモード"],["かまいたち軍",3,"マルシア&津田篤宏(ダイアン)",2,"タッグモード"]]],["r","第29回","2023-10-15",[["千鳥軍",1,"丘みどり",9,""],["千鳥軍",2,"宇徳敬子",7,""],["千鳥軍",3,"せいや(霜降り明星)",8,""],["かまいたち軍",1,"ほいけんた",9,""],["かまいたち軍",2,"柏木ひなた",10,""],["かまいたち軍",3,"お見送り芸人しんいち",0,""]]],["r","第30回","2023-10-29",[["千鳥軍",1,"K",6,""],["千鳥軍",2,"川畑泰史(吉本新喜劇)",4,""],["かまいたち軍",1,"松田元太(Travis Japan)",6,""],["かまいたち軍",2,"河合郁人(A.B.C-Z)",5,""]]],["r","第31回","2023-11-12",[["千鳥軍",1,"古賀いずみ(カズン)",6,""],["千鳥軍",2,"野呂佳代",7,""],["かまいたち軍",1,"水森かおり",7,""],["かまいたち軍",2,"なかねかな(なかねかな。)",5,""]]],["r","第32回","2023-11-26",[["千鳥軍",1,"よよよちゃん",10,""],["千鳥軍",2,"ジョニー志村",3,""],["千鳥軍",3,"いっこく堂",5,""],["かまいたち軍",1,"麻倉未稀",3,""],["かまいたち軍",2,"佐野晶哉(Aぇ! group)",10,""],["かまいたち軍",3,"ササキオサム(MOON CHILD)",4,"鬼ハードモード"]]],["r","第33回","2024-01-07",[["千鳥軍",1,"玉井詩織&高城れに(ももいろクローバーZ)",7,"タッグモード"],["千鳥軍",2,"BENI&Crystal Kay(親友タッグ)",6,"タッグモード"],["千鳥軍",3,"マルシア&華原朋美(劇薬タッグ)",1,"タッグモード"],["かまいたち軍",1,"島谷ひとみ&荒牧陽子(ノブ反逆同盟)",9,"タッグモード"],["かまいたち軍",2,"ほいけんた&ササキオサム(二大ダークヒーロー)",8,"タッグモード"],["かまいたち軍",3,"エハラマサヒロ",4,""]]],["r","第34回","2024-01-28",[["千鳥軍",1,"竹中雄大(Novelbright)",8,"鬼ハードモード"],["千鳥軍",2,"りんごちゃん",4,""],["かまいたち軍",1,"たむたむ",6,""],["かまいたち軍",2,"佐藤仁美",4,""]]],["r","第36回","2024-02-25",[["千鳥軍",1,"池田裕楽(STU48)",7,""],["千鳥軍",2,"竹内朱莉",6,""],["かまいたち軍",1,"シェネル",10,""],["かまいたち軍",2,"関真美",2,"Mr.Childrenオンリーモード"]]],["r","第37回","2024-03-10",[["千鳥軍",1,"濵田崇裕(WEST.)",8,""],["千鳥軍",2,"徳永ゆうき",5,""],["かまいたち軍",1,"富田鈴花(日向坂46)",10,""],["かまいたち軍",2,"柴山サリー",5,""]]],["r","第38回","2024-03-31",[["千鳥軍",1,"ハリウリサ",10,""],["千鳥軍",2,"アサガオ(デラックス×デラックス)",2,""],["かまいたち軍",1,"meiyo",6,""],["かまいたち軍",2,"神山智洋(WEST.)",7,""]]],["r","第39回","2024-04-21",[["千鳥軍",1,"大原櫻子",8,""],["千鳥軍",2,"浅岡雄也(FIELD OF VIEW)",5,""],["かまいたち軍",1,"細魚",9,"10曲目からは木山裕策名義"],["かまいたち軍",2,"ななみなな",1,""]]],["r","第40回","2024-05-12",[["千鳥軍",1,"いっこく堂",8,""],["千鳥軍",2,"キンタロー。",6,""],["千鳥軍",3,"彩青",5,""],["かまいたち軍",1,"Mr.シャチホコ",4,""],["かまいたち軍",2,"沙羅",9,""],["かまいたち軍",3,"中村素也",5,"B'zオンリーモード"]]],["r","第41回","2024-05-26",[["千鳥軍",1,"水森かおり",8,""],["千鳥軍",2,"松田元太(Travis Japan)",5,""],["かまいたち軍",1,"河合郁人",0,""],["かまいたち軍",2,"金ちゃん(鬼越トマホーク)",6,""]]],["r","明治ブルガリアヨーグルトコラボ 特別編","2024-05-29",[["ノブ軍",0,"徳永ゆうき",3,""],["大悟軍",0,"ほいけんた",5,""]]],["r","第43回","2024-06-23",[["千鳥軍",1,"chay",10,""],["千鳥軍",2,"佐野晶哉(Aぇ! group)",4,"鬼ハードモード"],["千鳥軍",3,"氏神一番(カブキロックス)",5,""],["かまいたち軍",1,"nanami",4,"鬼ハードモード"],["かまいたち軍",2,"藤牧京介(INI)",5,""],["かまいたち軍",3,"みはる",8,""]]],["r","第44回","2024-07-07",[["千鳥軍",1,"市川由紀乃",7,""],["千鳥軍",2,"せいや(霜降り明星)",4,""],["かまいたち軍",1,"ほい航大",10,""],["かまいたち軍",2,"松倉海斗(Travis Japan)",4,""]]],["r","FNS27時間テレビ2024","2024-07-20",[["鬼レンチャン軍",1,"池ちゃん&キンタロー。(池キンタッグ)",8,"タッグモード"],["鬼レンチャン軍",2,"松田元太&松倉海斗(Travis Japan)",7,"タッグモード"],["鬼レンチャン軍",3,"津田篤宏&徳永ゆうき(ポンコツ×2)",6,"タッグモード"],["新しいカギ軍",1,"せいや&竹中雄大(カラオケ仲間)",5,"タッグモード"],["新しいカギ軍",2,"ほいけんた&たむたむ(ズルとゲロ)",9,"タッグモード"],["新しいカギ軍",3,"長田庄平&岡部大(カギタッグ)",6,"タッグモード"]]],["r","第46回","2024-08-18",[["千鳥軍",1,"よよよちゃん",6,"鬼ハードモード"],["千鳥軍",2,"小野正利",4,""],["かまいたち軍",1,"May J.",6,"鬼ハードモード"],["かまいたち軍",2,"K",5,""]]],["r","第49回","2024-10-06",[["千鳥軍",1,"島谷ひとみ&丘みどり(野次被害タッグ)",4,"タッグモード"],["千鳥軍",2,"丘みどり",10,""],["千鳥軍",3,"浅岡雄也&ササキオサム(おじさんタッグ)",4,"タッグモード"],["かまいたち軍",1,"BENI&シェネル(最強ママ友タッグ)",5,"タッグ鬼ハードモード"],["かまいたち軍",2,"ハリウリサ",7,"鬼ハードモード"],["かまいたち軍",3,"Mr.シャチホコ&中村素也(ミスチル×B’z)",5,"タッグモード"]]],["r","第50回","2024-10-20",[["千鳥軍",1,"玉井詩織(ももいろクローバーZ)",7,""],["千鳥軍",2,"マエダ夏男",4,""],["かまいたち軍",1,"浦川翔平(THE RAMPAGE)",3,""],["かまいたち軍",2,"沙羅",9,""]]],["r","第51回","2024-11-03",[["千鳥軍",1,"マルシア",9,""],["千鳥軍",2,"ドリアン・ロロブリジーダ",6,""],["かまいたち軍",1,"河邑ミク",6,"鬼ハードモード"],["かまいたち軍",2,"タカシ(超特急)",3,""]]],["r","第52回","2024-11-17",[["千鳥軍",1,"歌心りえ",10,""],["千鳥軍",2,"吉川ひより(超ときめき♡宣伝部)",4,""],["千鳥軍",3,"仲川瑠夏(FRUITS ZIPPER)",4,""],["かまいたち軍",1,"KAY-I(ROYALcomfort)",9,"鬼ハードモード"],["かまいたち軍",2,"松田里奈(櫻坂46)",7,""],["かまいたち軍",3,"松本明子",0,""]]],["r","第54回","2025-01-05",[["千鳥軍",1,"ほいけんた&Toshl(人類の闇と光)",9,"タッグモード"],["千鳥軍",2,"池ちゃん&キンタロー。(奇女タッグ)",6,"タッグモード"],["千鳥軍",3,"仲川瑠夏&櫻井優衣(FRUITS ZIPPER)",0,"タッグモード"],["かまいたち軍",1,"神山智洋&濵田崇裕(WEST.)",3,"タッグ鬼ハードモード"],["かまいたち軍",2,"富田鈴花&髙橋未来虹(日向坂46)",10,"タッグモード"],["かまいたち軍",3,"浦川翔平&鈴木昂秀(THE RAMPAGE)",6,"タッグモード"]]],["r","第55回","2025-01-19",[["千鳥軍",1,"Crystal Kay",6,""],["千鳥軍",2,"河合郁人",7,""],["かまいたち軍",1,"荒牧陽子",7,"鬼ハードモード"],["かまいたち軍",2,"リン・ユーチュン",2,""]]],["r","第56回","2025-02-09",[["千鳥軍",1,"宇徳敬子",4,""],["千鳥軍",2,"平野綾",9,""],["かまいたち軍",1,"ササキオサム(MOON CHILD)",7,""],["かまいたち軍",2,"城南海",9,""]]],["r","第58回","2025-03-16",[["千鳥軍",1,"佐野晶哉(Aぇ! group)",5,"鬼ハードモード"],["千鳥軍",2,"SARI",9,""],["かまいたち軍",1,"シェネル",8,"鬼ハードモード"],["かまいたち軍",2,"TEE",2,""]]],["r","第60回","2025-04-20",[["千鳥軍",1,"よよよちゃん",9,"鬼ハードモード"],["千鳥軍",2,"仲川瑠夏&櫻井優衣(FRUITS ZIPPER)",6,"タッグモード"],["かまいたち軍",1,"りんごちゃん",7,""],["かまいたち軍",2,"レイザーラモンRG(レイザーラモン)",2,""]]],["r","第61回","2025-04-27",[["千鳥軍",1,"徳永ゆうき",7,""],["千鳥軍",2,"DOZAN11",5,""],["かまいたち軍",1,"木山裕策",6,""],["かまいたち軍",2,"岡村梨央(STU48)",9,""]]],["r","第62回","2025-05-11",[["千鳥軍",1,"BENI",3,"鬼ハードモード"],["千鳥軍",2,"たむたむ",10,""],["かまいたち軍",1,"麻倉未稀",3,""],["かまいたち軍",2,"杜このみ",10,""]]],["r","第63回","2025-05-18",[["千鳥軍",1,"水森かおり",6,""],["千鳥軍",2,"塩田将己(SHOW-WA)",3,""],["かまいたち軍",1,"柏木ひなた",6,"鬼ハードモード"],["かまいたち軍",2,"関真美",8,""]]],["r","第64回","2025-05-25",[["千鳥軍",1,"池ちゃん(STU48)",10,""],["千鳥軍",2,"新浜レオン",2,""],["かまいたち軍",1,"松浦航大",6,"鬼ハードモード"],["かまいたち軍",2,"松田元太(Travis Japan)",0,""]]],["r","第66回","2025-06-15",[["千鳥軍",1,"さくらまや",7,""],["千鳥軍",2,"アサガオ(デラックス×デラックス)",4,""],["かまいたち軍",1,"竹中雄大(Novelbright)",2,"鬼ハードモード"],["かまいたち軍",2,"meiyo",9,""]]],["r","第68回","2025-07-13",[["千鳥軍",1,"坂本冬休み",9,""],["千鳥軍",2,"メカ真麻",2,"鬼ハードモード"],["かまいたち軍",1,"トモ(テツandトモ)",6,""],["かまいたち軍",2,"ロンフーあつし",6,""]]],["r","第69回","2025-07-27",[["千鳥軍",1,"水森かおり&キンタロー。(全曲扮装タッグ)",7,"タッグモード"],["千鳥軍",2,"浦川翔平&TEE(ぶち上げタッグ)",6,"タッグモード"],["かまいたち軍",1,"ほいけんた",9,""],["かまいたち軍",2,"徳永ゆうき&新浜レオン(若手演歌タッグ)",2,"タッグモード"]]],["r","第70回","2025-08-03",[["千鳥軍",0,"増田彩乃(CUTIE STREET)",4,""],["かまいたち軍",0,"ななみなな",5,""]]],["r","第72回","2025-08-17",[["千鳥軍",1,"chay",5,"鬼ハードモード"],["千鳥軍",2,"MindaRyn",8,""],["かまいたち軍",1,"いっこく堂",5,""],["かまいたち軍",2,"松倉海斗(Travis Japan)",7,""]]],["r","第73回","2025-08-24",[["千鳥軍",1,"玉井詩織(ももいろクローバーZ)",10,""],["千鳥軍",2,"河合郁人",3,""],["かまいたち軍",1,"ハリウリサ",4,"鬼ハードモード"],["かまいたち軍",2,"ダブルネーム",5,"タッグモード"]]],["r","第74回","2025-09-07",[["千鳥軍",1,"浅岡雄也(FIELD OF VIEW)",3,""],["千鳥軍",2,"ももきゅん(≠ME)",10,""],["かまいたち軍",1,"スティーブ・魚ズ",8,""],["かまいたち軍",2,"野呂佳代",5,""]]],["r","第77回","2025-09-28",[["千鳥軍",1,"城南海",10,""],["千鳥軍",2,"遅咲駿",2,""],["かまいたち軍",1,"藤牧京介(INI)",6,""],["かまいたち軍",2,"ササキオサム(MOON CHILD)",9,""]]],["r","第78回","2025-10-12",[["千鳥軍",1,"神山智洋(WEST.)",8,""],["千鳥軍",2,"11",5,""],["かまいたち軍",1,"荒牧陽子",8,"鬼ハードモード"],["かまいたち軍",2,"ビューティーこくぶ",1,""]]],["r","第79回","2025-10-19",[["千鳥軍",1,"中山エミリ",6,""],["千鳥軍",2,"EMILY(HONEBONE)",9,""],["かまいたち軍",1,"沙羅",7,""],["かまいたち軍",2,"中村素也",3,""]]],["r","第82回","2025-11-16",[["千鳥軍",1,"BENI",2,"鬼ハードモード"],["千鳥軍",2,"misono",8,""],["かまいたち軍",1,"伊礼彼方",7,""],["かまいたち軍",2,"小野正利",3,""]]],["r","第84回","2025-11-30",[["千鳥軍",1,"池ちゃん(STU48)",7,"鬼ハードモード"],["千鳥軍",2,"佐野晶哉(Aぇ! group)",6,"鬼ハードモード"],["かまいたち軍",1,"ソン・シギョン",9,""],["かまいたち軍",2,"タカシ(超特急)",3,""]]],["r","第85回","2025-12-14",[["千鳥軍",1,"MindaRyn",7,""],["千鳥軍",2,"橋爪奈菜",10,""],["かまいたち軍",1,"島谷ひとみ",9,""],["かまいたち軍",2,"濵田崇裕(WEST.)",1,""]]],["r","第88回","2026-01-25",[["千鳥軍",1,"りんごちゃん",4,""],["千鳥軍",2,"たむたむ",2,"鬼ハードモード"],["かまいたち軍",1,"KAY-I(ROYALcomfort)",0,"鬼ハードモード"],["かまいたち軍",2,"ミセスタマキン初侍",10,"鬼ハードモード"]]],["r","第89回","2026-02-01",[["千鳥軍",1,"よよよちゃん",5,"鬼ハードモード"],["千鳥軍",2,"プッシュ徳永",6,""],["かまいたち軍",1,"保田圭",10,""],["かまいたち軍",2,"大山太徳",5,""]]],["r","第92回","2026-02-22",[["千鳥軍",1,"水森かおり",6,""],["千鳥軍",2,"青山新",6,""],["かまいたち軍",1,"竹中雄大(Novelbright)",9,"ノーマル女性曲モード"],["かまいたち軍",2,"千賀健永(Kis-My-Ft2)",5,""]]],["r","第94回","2026-03-15",[["千鳥軍",1,"富田鈴花",2,"鬼ハードモード"],["千鳥軍",2,"針谷紀久子",9,""],["かまいたち軍",1,"ほいけんた",9,""],["かまいたち軍",2,"RIOSKE(ペルピンズ)",6,""]]],["r","第95回","2026-03-22",[["千鳥軍",0,"May J.",7,"鬼ハードモード"],["かまいたち軍",0,"meiyo",5,""]]],["r","第97回","2026-04-19",[["千鳥軍",1,"城南海",9,"鬼ハードモード"],["千鳥軍",2,"老け桜井",0,""],["かまいたち軍",1,"濵田崇裕(WEST.)",6,""],["かまいたち軍",2,"ももきゅん(≠ME)",5,"鬼ハードモード"]]],["r","第100回記念","2026-05-10",[["千鳥軍",1,"chay",6,"鬼ハードモード"],["千鳥軍",2,"いっこく堂",6,""],["かまいたち軍",1,"スティーブ・魚ズ",7,""],["かまいたち軍",2,"藤咲碧羽(ONE LOVE ONE HEART)",5,""]]],["r","第101回","2026-05-17",[["千鳥軍",1,"キンタロー。",10,""],["千鳥軍",2,"仲川瑠夏(FRUITS ZIPPER)",4,""],["かまいたち軍",1,"カトリーナ陽子",7,""],["かまいたち軍",2,"浅岡雄也(FIELD OF VIEW)",3,""]]],["r","第102回","2026-05-24",[["千鳥軍",1,"Beverly",10,""],["千鳥軍",2,"彩青",5,""],["かまいたち軍",1,"神山智洋(WEST.)",7,""],["かまいたち軍",2,"nanami",6,"鬼ハードモード"]]],["r","第105回","2026-06-14",[["千鳥軍",1,"ハリウリサ",5,""],["千鳥軍",2,"ミラクルひかる",6,""],["かまいたち軍",1,"ササキオサム(MOON CHILD)",8,""],["かまいたち軍",2,"柏木ひなた",5,"鬼ハードモード"]]],["r","第107回","2026-06-28",[["千鳥軍",1,"BENI",9,""],["千鳥軍",2,"籾山ひめり(高嶺のなでしこ)",4,""],["かまいたち軍",1,"荒牧陽子",6,"鬼ハードモード"],["かまいたち軍",2,"遠藤久美子",4,""]]],["r","第109回","2026-07-12",[["千鳥軍",1,"MindaRyn",10,""],["千鳥軍",2,"河合郁人",4,""],["かまいたち軍",1,"杜このみ",2,"鬼ハードモード"],["かまいたち軍",2,"TSUZUMI(ME:I)",9,""]]],["r","第110回","2026-07-19",[["千鳥軍",1,"坂本冬休み",7,""],["千鳥軍",2,"SJ(GAG)",5,""],["かまいたち軍",1,"沙羅",6,""],["かまいたち軍",2,"みはる",5,""]]],["r","第111回","2026-07-26",[["千鳥軍",1,"池ちゃん(STU48)",5,"鬼ハードモード"],["千鳥軍",2,"浦川翔平(THE RAMPAGE)",7,""],["かまいたち軍",1,"KAY-I(ROYALcomfort)",10,""],["かまいたち軍",2,"高橋成美",3,""]]],["r","第115回","2026-09-20",[["千鳥軍",1,"BON.井上",9,""],["千鳥軍",2,"横山だいすけ",4,""],["かまいたち軍",1,"歌心りえ",5,"鬼ハードモード"],["かまいたち軍",2,"TEE",6,""]]],["r","第116回","2026-09-27",[["千鳥軍",1,"SARI",6,""],["千鳥軍",2,"せいや(霜降り明星)",6,""],["かまいたち軍",1,"ダイアナ・ガーネット",9,""],["かまいたち軍",2,"佐々木大光(KEY TO LIT)",1,""]]],["r","第119回","2026-10-18",[["千鳥軍",1,"丘みどり",8,"鬼ハードモード"],["千鳥軍",2,"宇徳様",1,""],["かまいたち軍",1,"藤咲碧羽(ONE LOVE ONE HEART)",10,""],["かまいたち軍",2,"河邑ミク",0,"鬼ハードモード"]]],["r","第120回","2026-10-25",[["千鳥軍",1,"よよよちゃん",4,"鬼ハードモード"],["千鳥軍",2,"たむたむ",10,""],["かまいたち軍",1,"エミリ(HONEBONE)",5,""],["かまいたち軍",2,"吉川ひより(超ときめき♡宣伝部)",5,""]]],["r","第121回","2026-11-01",[["千鳥軍",1,"山川恵里佳",10,""],["千鳥軍",2,"ダンシング谷村",3,""],["かまいたち軍",1,"大野雄大(Da-iCE)",5,""],["かまいたち軍",2,"富田鈴花",9,""]]]];
+// あいうえお順の並べ替え用の読み（漢字の名前だけ）
+const RD = {"BON.井上":"ぼんいのうえ","Mr.シャチホコ":"みすたーしゃちほこ","いっこく堂":"いっこくどう","お見送り芸人しんいち":"おみおくりげいにんしんいち","ほい航大":"ほいこうだい","もっと木山":"もっときやま","カトリーナ陽子":"かとりーなようこ","ジョニー志村":"じょにーしむら","スティーブ・魚ズ":"すていーぶうおず","ダンシング谷村":"だんしんぐたにむら","プッシュ徳永":"ぷっしゅとくなが","マエダ夏男":"まえだなつお","ミセスタマキン初侍":"みせすたまきんはつざむらい","メカ真麻":"めかまあさ","丘みどり":"おかみどり","中孝介":"あたりこうすけ","中山エミリ":"なかやまえみり","中村素也":"なかむらもとや","丸山礼":"まるやまれい","亜生":"あしょう","仲川瑠夏":"なかがわるか","伊礼彼方":"いれいかなた","佐々木大光":"ささきたいが","佐藤仁美":"さとうひとみ","佐野晶哉":"さのまさや","保田圭":"やすだけい","加藤史帆":"かとうしほ","加護亜依":"かごあい","北本莉斗":"きたもとりと","千賀健永":"せんがけんと","友近":"ともちか","古賀いずみ":"こがいずみ","吉川ひより":"よしかわひより","坂本冬休み":"さかもとふゆやすみ","城南海":"きずきみなみ","塩田将己":"しおたまさき","増田彩乃":"ますだあやの","大原櫻子":"おおはらさくらこ","大山太徳":"おおやまたいとく","大野雄大":"おおのゆうだい","宇徳敬子":"うとくけいこ","宇徳様":"うとくさま","富田鈴花":"とみたすずか","小野正利":"おのまさとし","山川恵里佳":"やまかわえりか","岡村梨央":"おかむらりお","岡部大":"おかべだい","島太星":"しまたいせい","島谷ひとみ":"しまたにひとみ","川畑泰史":"かわばたやすし","市川由紀乃":"いちかわゆきの","平野綾":"ひらのあや","彩青":"ひろ","後上翔太":"ごがみしょうた","徳永ゆうき":"とくながゆうき","斉藤慎二":"さいとうしんじ","斎藤司":"さいとうつかさ","新浜レオン":"にいはまれおん","星乃":"ほしの","木下隆行":"きのしたたかゆき","木山裕策":"きやまゆうさく","杜このみ":"もりこのみ","松倉海斗":"まつくらかいと","松本明子":"まつもとあきこ","松浦航大":"まつうらこうだい","松田元太":"まつだげんた","松田里奈":"まつだりな","林健":"はやしけん","柏木ひなた":"かしわぎひなた","柴山サリー":"しばやまさりー","横山だいすけ":"よこやまだいすけ","橋爪奈菜":"はしづめなな","櫻井優衣":"さくらいゆい","歌心りえ":"うたごころりえ","段原瑠々":"だんばらるる","氏神一番":"うじがみいちばん","水森かおり":"みずもりかおり","池ちゃん":"いけちゃん","池田裕楽":"いけだゆら","沙羅":"さら","沢田知可子":"さわだちかこ","河合郁人":"かわいふみと","河邑ミク":"かわむらみく","津田篤宏":"つだあつひろ","浅岡雄也":"あさおかゆうや","浦川翔平":"うらかわしょうへい","濵田崇裕":"はまだたかひろ","炎鵬関":"えんほうせき","狩野英孝":"かのうえいこう","玉井詩織":"たまいしおり","矢口真里":"やぐちまり","神奈月":"かなづき","神山智洋":"かみやまともひろ","稲田直樹":"いなだなおき","竹中雄大":"たけなかゆうだい","竹内朱莉":"たけうちあかり","籾山ひめり":"もみやまひめり","細シャ":"ほそしゃ","細魚":"ほそうお","翔猿関":"とびざるせき","老け桜井":"ふけさくらい","與那城奨":"よなしろしょう","花村想太":"はなむらそうた","荒牧陽子":"あらまきようこ","華原朋美":"かはらともみ","藤咲碧羽":"ふじさきあおば","藤川千愛":"ふじかわちあい","藤牧京介":"ふじまききょうすけ","近藤くみこ":"こんどうくみこ","遅咲駿":"おそざきしゅん","遠藤久美子":"えんどうくみこ","野呂佳代":"のろかよ","金ちゃん":"きんちゃん","金ちゃんパパ":"きんちゃんぱぱ","針谷紀久子":"はりやきくこ","鈴木昂秀":"すずきたかひで","錦野旦":"にしきのあきら","長田庄平":"おさだしょうへい","関真美":"せきまみ","青山新":"あおやまあらた","高城れに":"たかぎれに","高橋成美":"たかはしなるみ","高橋真麻":"たかはしまあさ","髙橋未来虹":"たかはしみくに","麻倉未稀":"あさくらみき","齊藤京子":"さいとうきょうこ"};
+// 同じ人の別名義（別の表記 → まとめる名前）
+const DBAL = { 'ほい航大': '松浦航大', 'ミセスタマキン初侍': '松浦航大', '池ちゃん': '池田裕楽' };
+const dbBase = s => s.replace(/[（(][^）)]*[）)]/g, '').trim();
+const dbKey = b => /^[A-Za-z0-9]/.test(b) ? '\uffff' + b.toLowerCase() : (RD[b] || b.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 96)).replace(/[ー・\s.。]/g, ''));
+let DBX = [], DBF = DB, DBS = [];
+function dbBuild() {
+  DBF = DB.concat(DBX.filter(x => !DB.some(e => e[2] === x[2])));
+  const m = {};
+  DBF.forEach((e, ei) => e[3].forEach(r => {
+    const ps = r[2].split('&');
+    ps.forEach(p => {
+      const b0 = dbBase(p); if (!b0) return;
+      const b = DBAL[b0] || b0;
+      const o = m[b] = m[b] || { n: b, a: [], af: '', ord: ei, al: new Set() };
+      if (b0 !== b) o.al.add(b0);
+      o.a.push({ e, r, tag: ps.length > 1, as: b0 });
+      const mm = ps.length === 1 && p.match(/[（(]([^）)]*)[）)]/); if (mm) o.af = mm[1];
+    });
+  }));
+  DBS = Object.values(m).map(o => { const v = o.a.map(x => x.r[3]); o.cnt = v.length; o.max = Math.max(...v); o.avg = v.reduce((s, x) => s + x, 0) / v.length; o.ten = v.filter(x => x === 10).length; o.k = dbKey(o.n); return o; });
+}
+dbBuild();
+let dbm = 'ch', dbq = '', dbsel = '', dbs = 'kana', dbrev = false;
+const dbSort = { kana: (a, b) => a.k.localeCompare(b.k, 'ja'), cnt: (a, b) => b.cnt - a.cnt || a.k.localeCompare(b.k, 'ja'), first: (a, b) => a.ord - b.ord };
+const dbLabel = e => (e[0] === 'p' ? 'パイロット版' : '') + e[1] + '（' + e[2].replace(/-/g, '/') + '）';
+const dbRow = r => `${esc(r[0])} ${r[1] ? r[1] + '位 ' : ''}<b>${r[3]}レンチャン</b>${r[4] ? ' <span class="text-gray-400">' + esc(r[4]) + '</span>' : ''}`;
+function rDb() {
+  const on = (c, v) => c === v ? 'bg-red-600' : 'bg-gray-800 text-gray-300';
+  $('tab-db').innerHTML = `<div class='card mb-4 space-y-3'><h2 class='font-bold text-yellow-400'>📖 鬼レンチャン データベース</h2><div class='flex gap-2'><button type='button' class='btn text-sm ${on(dbm, 'ch')}' data-a='dbm' data-m='ch'>挑戦者</button><button type='button' class='btn text-sm ${on(dbm, 'ep')}' data-a='dbm' data-m='ep'>回ごと</button><button type='button' class='btn text-sm ${on(dbm, 'sg')}' data-a='dbm' data-m='sg'>🎵 曲</button></div>` +
+    (dbm === 'ch' ? `<div class='flex gap-2 flex-wrap'>${[['kana', 'あいうえお順'], ['cnt', '登場回数順'], ['first', '登場順']].map(([k, l]) => `<button type='button' class='btn text-xs ${on(dbs, k)}' data-a='dbsort' data-s='${k}'>${l}${dbs === k && dbrev ? '（逆）' : ''}</button>`).join('')}</div><p class='text-xs text-gray-400'>同じ並べ方をもう一度押すと、逆の順になります</p>` : '') +
+    `<input id='dbq' value='${esc(dbq)}' placeholder='${dbm === 'ch' ? '挑戦者名で検索' : dbm === 'sg' ? '曲名・歌手名・挑戦者名で検索' : '回・日付・挑戦者名で検索（例：2025）'}' autocomplete='off'><p class='text-xs text-gray-400'>※2026/5/10（100回記念）以降は、番組内の回数に合わせて、wikiの表記より+1にしています</p></div><div id='dbbody'></div>`;
+  $('dbq').oninput = e => { dbq = e.target.value; paintDb(); };
+  paintDb();
+}
+// ===== クイズ（予想とは別のポイント）：記録の並びから挑戦者を当てる =====
+const dbSeq = o => o.a.slice().sort((x, y) => x.e[2].localeCompare(y.e[2])).map(x => x.r[3]).join('-');
+let QZ = [];
+function qzBuild() { const m = {}; DBS.forEach(o => { o.sq = dbSeq(o); (m[o.sq] = m[o.sq] || []).push(o); }); QZ = DBS.filter(o => o.cnt >= 3 && m[o.sq].length === 1); }
+qzBuild();
+let Q = {}, qz = null, qzStreak = 0;
+const QKEY = KEY + '_qz';
+let qzErr = null;
+const qzPend = () => { try { const p = JSON.parse(localStorage.getItem(QKEY) || 'null'); return p && hasName() && p.name === S.me.name ? p : null; } catch (e) { return null; } };
+const qzSetPend = r => { try { if (r) localStorage.setItem(QKEY, JSON.stringify(r)); else localStorage.removeItem(QKEY); } catch (e) {} };
+const qzMsg = e => e && e.code === 'permission-denied' ? 'Firestoreのルールの更新が必要です' : e && e.code === 'timeout' ? '通信が届いていません' : '保存エラー（' + ((e && e.code) || '通信') + '）';
+const myQ = () => { const s = hasName() && Q[pid(S.me.name)], p = qzPend(); return [s, p].filter(Boolean).sort((x, y) => (y.pt || 0) - (x.pt || 0))[0] || { pt: 0 }; };
+async function qzFlush() {
+  const p = qzPend(); if (!p) return true;
+  const s = Q[pid(p.name)]; if (s && (s.pt || 0) >= (p.pt || 0)) { qzSetPend(null); qzErr = null; return true; }
+  try { await tmo(setDoc(doc(db, 'quiz', pid(p.name)), p)); qzSetPend(null); qzErr = null; return true; } catch (e) { qzErr = e; return false; }
+}
+const titleOf = s => String(s || '').split('/')[0];
+const qzRnd = n => Math.floor(Math.random() * n);
+const qzShuf = x => x.slice().sort(() => Math.random() - 0.5);
+const qzPickN = (arr, n, ex) => { const p = arr.filter(x => x !== ex), o = []; while (o.length < n && p.length) o.push(p.splice(qzRnd(p.length), 1)[0]); return o; };
+const seqOf = o => o.a.slice().sort((x, y) => x.e[2].localeCompare(y.e[2]));
+// 選曲のデータ: このサイトの過去の回・確定した今回・データベースに入った選曲
+function songPicks() {
+  const o = [], add = (c, at) => Object.values(c.songs || {}).forEach(s => { if (s && c.name) o.push({ song: titleOf(s), art: String(s).split('/')[1] || '', who: DBAL[c.name] || c.name, at }); });
+  S.past.forEach(p => (p.ch || []).forEach(c => add(c, p.title || '')));
+  S.ch.forEach(c => { if (S.decided || c.done) add(c, roundTitle()); });
+  DBF.forEach(e => e[3].forEach(r => (r[5] || []).forEach(s => o.push({ song: titleOf(s), art: String(s).split('/')[1] || '', who: DBAL[dbBase(r[2])] || dbBase(r[2]), at: e[1] }))));
+  return o;
+}
+function sgHtml(q) {
+  const sp = songPicks();
+  if (!sp.length) return `<div class='card text-center text-sm text-gray-400'>選曲のデータがまだありません。管理人が放送の結果を入れて「結果を決定」すると、ここに増えていきます。</div>`;
+  const m = {}; sp.forEach(x => { const k = nm(x.song); (m[k] = m[k] || { song: x.song, art: x.art, a: [] }).a.push(x); });
+  const list = Object.values(m).filter(o => !q || nm(o.song).includes(q) || nm(o.art).includes(q) || o.a.some(x => nm(x.who).includes(q))).sort((x, y) => y.a.length - x.a.length || x.song.localeCompare(y.song, 'ja'));
+  return list.slice(0, 100).map(o => `<div class='card mb-2 text-sm'><b class='text-yellow-400'>${esc(o.song)}</b>${o.art ? `<span class='text-xs text-gray-400'>（${esc(o.art)}）</span>` : ''}<p class='text-xs mt-1'>${o.a.map(x => esc(x.who) + ' <span class="text-gray-500">' + esc(x.at) + '</span>').join('<br>')}</p></div>`).join('') || `<p class='text-center text-gray-400 py-6'>見つかりませんでした</p>`;
+}
+function qzNew() {
+  const sp = songPicks(), who = [...new Set(sp.map(x => x.who))], st = DBS.filter(x => x.cnt >= 2), kinds = ['seq', 'stat', 'stat'];
+  if (sp.length >= 4 && who.length >= 4) kinds.push('song', 'song');
+  let k = kinds[qzRnd(kinds.length)];
+  if (k === 'seq' && !QZ.length) k = 'stat';
+  if (k === 'stat' && !st.length) k = 'seq';
+  if (k === 'seq' && QZ.length) {
+    const o = QZ[qzRnd(QZ.length)], rs = seqOf(o);
+    qz = { q: 'この記録の挑戦者は誰？', big: o.sq, sub: `（出た順のレンチャン数。${o.cnt}回の挑戦）`, opts: qzShuf([o, ...qzPickN(DBS.filter(x => x.cnt >= 3), 3, o)]).map(x => x.n), ans: o.n, info: rs.map(x => `<p>${esc(dbLabel(x.e))}　${dbRow(x.r)}</p>`).join(''), hint: `初登場は${esc(dbLabel(rs[0].e))}${o.af ? '、所属は' + esc(o.af) : ''}` };
+  } else if (k === 'song') {
+    const t = sp[qzRnd(sp.length)];
+    qz = { q: 'この曲を選んだ挑戦者は誰？', big: t.song, sub: t.art ? `（${t.art}）` : '', opts: qzShuf([t.who, ...qzPickN(who, 3, t.who)]), ans: t.who, info: `<p>${esc(t.at)}</p>`, hint: t.at ? `登場した回：${esc(t.at)}` : '' };
+  } else {
+    const o = st[qzRnd(st.length)], rs = seqOf(o), rec = rs.map(x => x.r[3]), sum = rec.reduce((s, v) => s + v, 0);
+    const kind = ['sum', 'avg', 'max', 'cnt', 'ten'][qzRnd(5)];
+    const v = { sum, avg: Math.round(sum / rec.length * 10) / 10, max: Math.max(...rec), cnt: rec.length, ten: rec.filter(x => x === 10).length }[kind];
+    const lab = { sum: '通算のレンチャン数（全部の合計）', avg: '平均レンチャン数（小数第1位まで）', max: '最高記録', cnt: '挑戦した回数', ten: '10レンチャンを達成した回数' }[kind];
+    const step = kind === 'avg' ? 0.3 : kind === 'sum' ? 3 : 1, lim = kind === 'max' ? 10 : kind === 'ten' ? rec.length : 9999, lo = kind === 'cnt' ? 1 : 0;
+    const cand = []; for (let d = -8; d <= 8; d++) { if (!d) continue; const x = Math.round((v + d * step) * 10) / 10; if (x >= lo && x <= lim) cand.push(x); }
+    cand.sort((x, y) => Math.abs(x - v) - Math.abs(y - v));
+    const f = x => kind === 'avg' ? x.toFixed(1) : String(x);
+    qz = { q: `この挑戦者の${lab}は？`, big: o.n, sub: '', opts: qzShuf([v, ...qzPickN(cand.slice(0, 6), 3)]).map(f), ans: f(v), info: rs.map(x => `<p>${esc(dbLabel(x.e))}　${dbRow(x.r)}</p>`).join(''), hint: o.cnt + '回挑戦している人です' };
+  }
+  qz.pick = ''; qz.sh = false; qz.gain = 0;
+}
+function rQuizTab() {
+  $('tab-quiz').innerHTML = `<div class='card mb-4 space-y-2'><h2 class='font-bold text-yellow-400'>🎮 ゲーム（クイズ）</h2><div id='qzme'></div><p class='text-xs text-gray-400'>正解すると、連続して当てるほどポイントが増えます（1問目1pt、2問目2pt、3問目3pt…。間違えると1ptに戻ります）。ポイントに上限はありません。予想のポイントとは別に数えます（ゲームポイント）。</p></div><div id='qzq'></div><div id='qzrank' class='card mt-4'></div>`;
+  paintQz(); paintQzRank();
+  qzFlush().then(() => { if (tabNow === 'quiz') { paintMe(); paintQzRank(); } });
+}
+function paintMe() {
+  const el = $('qzme'); if (!el) return;
+  el.innerHTML = hasName() ? `<p class='text-sm'>あなたのゲームポイント：<b class='text-yellow-400 text-lg'>${myQ().pt || 0}pt</b></p>` : `<p class='text-sm text-yellow-300'>「👤 プロフィール」で名前を登録すると、ポイントがたまります</p>`;
+  if (qzPend() && qzErr) el.innerHTML += `<p class='text-xs text-red-300'>⚠️ ポイントはこの端末に保存しましたが、サーバーに送れていません（${qzMsg(qzErr)}）。直ったら、この「ゲーム」タブを開き直すと自動で送ります</p>`;
+}
+function paintQz() {
+  if (!qz) qzNew();
+  const ans = !!qz.pick, right = qz.pick === qz.ans;
+  paintMe();
+  $('qzq').innerHTML = `<div class='card space-y-3'><div class='flex justify-between text-xs text-gray-400'><span>ヒントは何度見てもOK</span><span>🔥 連続正解 ${qzStreak}</span></div><p class='font-bold text-yellow-400'>${esc(qz.q)}</p><p class='text-3xl font-bold text-center py-3 tracking-wider break-all'>${esc(qz.big)}</p>${qz.sub ? `<p class='text-xs text-gray-400 text-center'>${esc(qz.sub)}</p>` : ''}` +
+    qz.opts.map(x => `<button type='button' class='btn w-full text-left ${!ans ? 'bg-gray-800' : x === qz.ans ? 'bg-green-700' : x === qz.pick ? 'bg-red-800' : 'bg-gray-800 opacity-60'}' data-a='qzans' data-n='${esc(x)}' ${ans ? 'disabled' : ''}>${esc(x)}</button>`).join('') +
+    (ans ? `<p class='font-bold ${right ? 'text-green-400' : 'text-red-300'}'>${right ? '⭕ 正解！ +' + qz.gain + 'ポイント' + (hasName() ? '' : '（名前を登録するとポイントがもらえます）') : '❌ 正解は ' + esc(qz.ans) + ' でした'}</p><div class='text-xs space-y-1 border-t border-gray-700 pt-2'>${qz.info}</div><button type='button' class='btn w-full bg-red-600' data-a='qznext'>次の問題へ</button>`
+      : (qz.sh ? `<p class='text-sm text-yellow-300'>ヒント：${qz.hint}</p>` : `<button type='button' class='btn w-full bg-gray-700 text-sm' data-a='qzhint'>💡 ヒントを見る</button>`)) + `</div>`;
+}
+function paintQzRank() {
+  const el = $('qzrank'); if (!el) return;
+  const all = { ...Q }, pd = qzPend(); if (pd) all[pid(pd.name)] = pd;
+  const rows = Object.values(all).filter(x => x && x.name && x.pt > 0).sort((x, y) => y.pt - x.pt || (x.ts || 0) - (y.ts || 0));
+  let rk = 0, prev = -1;
+  el.innerHTML = `<h3 class='font-bold text-yellow-400 mb-2'>🏆 ゲームランキング</h3>` + (rows.length ? rows.slice(0, 30).map((x, i) => { if (x.pt !== prev) { rk = i + 1; prev = x.pt; } return `<div class='flex justify-between text-sm py-1 border-b border-gray-800 ${hasName() && x.name === S.me.name ? 'text-yellow-300' : ''}'><span>${rk}位　${esc(x.name)}</span><b>${x.pt}pt</b></div>`; }).join('') : `<p class='text-sm text-gray-400'>まだ誰もポイントを取っていません</p>`);
+}
+function paintDb() {
+  const q = nm(dbq), el = $('dbbody'); let h = '';
+  if (dbm === 'ch') {
+    const list = DBS.filter(o => !q || nm(o.n).includes(q) || nm(o.af).includes(q) || [...o.al].some(x => nm(x).includes(q))).sort(dbSort[dbs]);
+    if (dbrev) list.reverse();
+    h = list.map(o => `<div class='card mb-2 text-sm'><button type='button' class='w-full text-left' data-a='dbsel' data-n='${esc(o.n)}'><div class='flex justify-between'><b class='text-yellow-400'>${esc(o.n)}${o.af ? '<span class="text-xs text-gray-400">（' + esc(o.af) + '）</span>' : ''}</b><span>${o.cnt}回挑戦</span></div><p class='text-xs text-gray-400'>最高 ${o.max}レンチャン ／ 平均 ${o.avg.toFixed(1)} ／ 10レンチャン ${o.ten}回</p>${o.al.size ? `<p class='text-xs text-gray-500'>別名義：${[...o.al].map(esc).join('、')}</p>` : ''}</button>` + (o.n === dbsel ? `<div class='mt-2 space-y-1 text-xs border-t border-gray-700 pt-2'>${o.a.slice().sort((x, y) => y.e[2].localeCompare(x.e[2])).map(x => `<p>${esc(dbLabel(x.e))}${x.as !== o.n ? ' <span class="text-gray-400">（名義：' + esc(x.as) + '）</span>' : ''}<br>${x.tag ? '<span class="text-gray-400">タッグ: ' + esc(x.r[2]) + '</span><br>' : ''}${dbRow(x.r)}</p>`).join('')}</div>` : '') + `</div>`).join('') || `<p class='text-center text-gray-400 py-6'>見つかりませんでした</p>`;
+  } else if (dbm === 'sg') { h = sgHtml(q);
+  } else {
+    const list = DBF.map((e, i) => ({ e, i })).filter(o => !q || nm(dbLabel(o.e)).includes(q) || o.e[3].some(r => nm(r[2]).includes(q))).reverse();
+    h = list.slice(0, 100).map(o => `<div class='card mb-2 text-sm'><button type='button' class='w-full text-left' data-a='dbsel' data-n='${o.i}'><b class='text-yellow-400'>${esc(dbLabel(o.e))}</b> <span class='text-xs text-gray-400'>${o.e[3].length}人</span></button>` + (String(o.i) === dbsel ? `<div class='mt-2 space-y-1 text-xs border-t border-gray-700 pt-2'>${o.e[3].map(r => `<p>${esc(r[2])}　${dbRow(r)}</p>`).join('')}</div>` : '') + `</div>`).join('') || `<p class='text-center text-gray-400 py-6'>見つかりませんでした</p>`;
+  }
+  el.innerHTML = h;
+}
+const R = { predict: rPredict, results: rResults, ranking: rRanking, profile: rProfile, past: rPast, db: rDb, quiz: rQuizTab, admin: rAdmin };
+let tabNow = 'predict';
+function show(t) {
+  tabNow = t;
+  Object.keys(R).forEach(x => {
+    $('tab-' + x).classList.toggle('hidden', x !== t);
+    $('nav-' + x).className = 'btn text-sm ' + (x === t ? 'bg-red-600 shadow' : 'bg-gray-800 text-gray-300');
+  });
+  R[t]();
+  const nb = $('nav-' + t); if (nb && nb.scrollIntoView) nb.scrollIntoView({ inline: 'center', block: 'nearest' });
+  if (window.scrollY > 200) document.querySelector('nav').scrollIntoView();
+}
+
+// ===== 操作（クリックは全部ここで受ける） =====
+const A = {
+  tab: b => show(b.dataset.t),
+  savep: async () => { await savePred(true); },
+  xfmk: () => { if (!hasName()) { toast('先にプロフィールを保存してください'); return; } xfCode = btoa(unescape(encodeURIComponent(JSON.stringify({ n: S.me.name, d: L.dev })))); rProfile(); },
+  xfcp: async () => { const t = $('xfout'); try { await navigator.clipboard.writeText(xfCode); toast('コピーしました'); } catch (e) { if (t) t.select(); toast('入力欄を長押しして、コピーしてください'); } },
+  xfgo: () => {
+    let o; try { o = JSON.parse(decodeURIComponent(escape(atob(($('xfin').value || '').trim())))); } catch (e) { o = null; }
+    if (!o || !o.n || !o.d) { toast('コードが正しくありません'); return; }
+    L.dev = String(o.d); S.me.name = String(o.n).slice(0, 30); S.me.set = true; L.draft = null; xfCode = ''; save();
+    toast('引き継ぎました！'); show('profile');
+  },
+  savepf: async () => {
+    const old = S.me.name, n = $('pn').value.trim().slice(0, 30);
+    if (!n) { toast('名前を入力してください（必須）'); return; }
+    if (takenBy(n)) { toast('この名前は既に使われています。別の名前にしてください'); return; }
+    const data = { name: n, bio: $('pb').value.trim().slice(0, 100), oshi: $('po').value.trim().slice(0, 50), owner: L.dev, ...uidFor(n) };
+    const jobs = [], o = old && P[pid(old)];
+    if (old && old !== n && o && o.owner === L.dev) {
+      if (!P[pid(n)] && o.pred) { data.pred = o.pred; data.rid = o.rid || 0; }
+      jobs.push((async () => { const r0 = doc(db, 'players', pid(old)); if (uidFor(old).uid) { try { await setDoc(r0, { ...uidFor(old) }, { merge: true }); } catch (e) {} } await deleteDoc(r0); })());
+    }
+    jobs.push(setDoc(doc(db, 'players', pid(n)), data, { merge: true }));
+    S.me.name = n; S.me.set = true; if (L.draft) L.draft.n = n; save();
+    show('predict');
+    try { await tmo(Promise.all(jobs)); toast('プロフィールを保存しました！'); } catch (e) { fail(e); }
+  },
+  share: async () => {
+    const url = 'https://pen-hue.github.io/oniren/', title = '鬼レンチャン 予想＆ランキング';
+    try { if (navigator.share) { await navigator.share({ title, text: title, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(url); toast('リンクをコピーしました'); } catch (e) { toast(url); }
+  },
+  login: async () => {
+    const pw = $('pw').value;
+    if (!pw) { toast('パスワードを入力してください'); return; }
+    try { await signInWithEmailAndPassword(authA, ADMIN_EMAIL, pw); }
+    catch (e) {
+      const c = (e && e.code) || '';
+      toast(c === 'auth/invalid-credential' || c === 'auth/wrong-password' ? 'パスワードが違います'
+        : c === 'auth/operation-not-allowed' ? 'Firebaseで「メール／パスワード」のログインが有効になっていません'
+        : c === 'auth/user-not-found' ? '管理人のユーザーがFirebaseに登録されていません'
+        : 'ログインできませんでした（' + c + '）');
+    }
+  },
+  logout: async () => { try { await signOut(authA); } catch (e) {} },
+  okt: async b => {
+    readAdmin();
+    const k = b.dataset.k, a = S.ok || (S.ok = []), j = a.indexOf(k);
+    if (j >= 0) a.splice(j, 1); else a.push(k);
+    rAdmin(); await pushRound();
+  },
+  pe: b => { pe = +b.dataset.i; rAdmin(); window.scrollTo(0, 0); },
+  pecl: () => { pe = -1; rAdmin(); },
+  pesv: async () => {
+    const p = S.past[pe]; if (!p) return;
+    const dt = $('pe-date').value;
+    if (dt) p.date = fmtDate(dt);
+    p.title = $('pe-title').value.trim(); p.win = $('pe-win').value;
+    p.ch.forEach((c, i) => {
+      c.name = $('pe-n' + i).value.trim() || c.name; c.team = $('pe-t' + i).value; c.real = +$('pe-r' + i).value;
+      c.ws = [...Array(unkN(c)).keys()].map(j => { const e = $('pe-w' + i + '_' + j); return e ? e.value.trim() : ((c.ws || [])[j] || ''); });
+      LV(c.mode).forEach(l => { const e = $('pe-s' + i + '_' + l); if (e) c.songs[l] = e.value.trim(); });
+    });
+    if (await savePast(p)) { toast('修正を保存しました'); pe = -1; rAdmin(); }
+  },
+  ppdel: async b => {
+    if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'もう一度押すと外します'; return; }
+    const p = S.past[pe]; if (!p) return;
+    delete p.pred[b.dataset.n];
+    if (await savePast(p)) { toast('この回から外しました'); rAdmin(); }
+  },
+  pdel: async b => {
+    if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'もう一度押すと削除'; return; }
+    const i = +b.dataset.i, p = S.past[i]; if (!p) return;
+    try { await tmo(deleteDoc(doc(dbA, 'past', p.id))); S.past.splice(i, 1); rAdmin(); toast('削除しました'); } catch (e) { fail(e); }
+  },
+  dbm: b => { dbm = b.dataset.m; dbq = ''; dbsel = ''; rDb(); },
+  dbsel: b => { dbsel = dbsel === b.dataset.n ? '' : b.dataset.n; paintDb(); },
+  dbsort: b => { if (dbs === b.dataset.s) dbrev = !dbrev; else { dbs = b.dataset.s; dbrev = false; } rDb(); },
+  cdone: async b => { readAdmin(); const c = S.ch[+b.dataset.i]; if (!c) return; c.done = !c.done; if (await pushRound()) { rAdmin(); toast(c.done ? 'この挑戦者を確定しました（ランキングに反映）' : '確定を取り消しました'); } },
+  plhide: async b => { readAdmin(); const n = b.dataset.n, h = S.hid || (S.hid = []), j = h.indexOf(n); if (j >= 0) h.splice(j, 1); else h.push(n); if (await pushRound()) { rAdmin(); toast(j >= 0 ? '表示に戻しました' : '非表示にしました（管理人には見えます）'); } },
+  qzans: async b => {
+    if (!qz || qz.pick) return;
+    qz.pick = b.dataset.n;
+    if (qz.pick === qz.ans) {
+      qzStreak++; qz.gain = qzStreak;
+      if (hasName()) {
+        qzSetPend({ name: S.me.name, pt: (myQ().pt || 0) + qz.gain, ts: Date.now() });
+        paintQz(); paintQzRank();
+        if (!(await qzFlush())) toast('ポイントを保存できませんでした（' + qzMsg(qzErr) + '）');
+      }
+    } else qzStreak = 0;
+    paintQz(); paintQzRank();
+  },
+  qzhint: () => { if (qz) { qz.sh = true; paintQz(); } },
+  qznext: () => { qzNew(); paintQz(); },
+  pledit: b => { pledit = b.dataset.id; rAdmin(); },
+  plcancel: () => { pledit = ''; rAdmin(); },
+  plsave: async b => {
+    const id = b.dataset.id, o = P[id]; if (!o) return;
+    const n = $('pl-n').value.trim().slice(0, 30);
+    if (!n) { toast('名前を入力してください'); return; }
+    const data = { name: n, bio: $('pl-b').value.trim().slice(0, 100), oshi: $('pl-o').value.trim().slice(0, 50) };
+    try {
+      if (pid(n) !== id) {
+        if (takenBy(n)) { toast('この名前は既に使われています'); return; }
+        const nd = { ...data, ts: o.ts || Date.now() };
+        if (o.owner) nd.owner = o.owner;
+        if (o.pred) { nd.pred = o.pred; nd.rid = o.rid || 0; }
+        await tmo(setDoc(doc(dbA, 'players', pid(n)), nd));
+        await tmo(deleteDoc(doc(dbA, 'players', id)));
+        delete P[id]; P[pid(n)] = nd;
+      } else {
+        await tmo(setDoc(doc(dbA, 'players', id), data, { merge: true }));
+        Object.assign(P[id], data);
+      }
+      pledit = ''; rebuild(); rAdmin(); toast('保存しました');
+    } catch (e) { fail(e); }
+  },
+  pldel: async b => {
+    if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'もう一度押すと削除'; return; }
+    try { await tmo(deleteDoc(doc(dbA, 'players', b.dataset.id))); delete P[b.dataset.id]; rebuild(); rAdmin(); toast('削除しました'); } catch (e) { fail(e); }
+  },
+  addch: async () => {
+    if (S.ch.length >= 10) return toast('挑戦者は最大10人までです');
+    readAdmin();
+    const cnt = k => S.ch.filter((c, i) => teamOf(c, i) === k).length;
+    S.ch.push({ name: '挑戦者' + String.fromCharCode(65 + S.ch.length), mode: 'normal', team: '', real: 0, songs: {} });
+    rAdmin(); await pushRound();
+  },
+  rmch: async () => {
+    if (S.ch.length <= 1) return toast('挑戦者は最低1人必要です');
+    readAdmin(); S.ch.pop();
+    rAdmin(); await pushRound();
+  },
+  savech: async () => {
+    readAdmin();
+    if (await pushRound()) { rAdmin(); toast('保存しました'); }
+  },
+  shres: async b => {
+    const rk = curRank().slice(0, 5), text = `${roundTitle()} 鬼レンチャン予想ランキング🏆\n` + rk.map(x => `${x.rk}位 ${x.n} ${x.t}pt`).join('\n') + `\n#鬼レンチャン\nhttps://pen-hue.github.io/oniren/`;
+    if (b.dataset.m === 'x') { window.open('https://x.com/intent/post?text=' + encodeURIComponent(text), '_blank'); return; }
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(text); toast('結果の文章をコピーしました'); } catch (e) { toast('コピーできませんでした'); }
+  },
+  calc: async () => {
+    readAdmin(); S.decided = true;
+    if (await pushRound()) { await saveDbx(); rAdmin(); toast('採点しました！「🏆 ランキング」で確認（データベースにも追加しました）'); }
+  },
+  reset: async b => {
+    if (!b.dataset.arm) {
+      b.dataset.arm = 1;
+      b.textContent = S.decided ? 'もう一度押すと過去の回に保存して新しい回を始めます' : 'もう一度押すと全消去します（未採点なので保存されません）';
+      return;
+    }
+    try {
+      readAdmin();
+      const sv = S.decided;
+      if (sv) await tmo(addDoc(collection(dbA, 'past'), {
+        date: fmtDate(S.airDate || todayStr()), title: roundTitle(), win: actualWin(), ok: S.ok || [], ts: Date.now(), ch: S.ch,
+        players: Object.keys(S.pred).map(n => ({ n, d: S.pred[n] })),
+        rank: Object.keys(S.pred).map(n => ({ n, ...sc(n) })).sort((a, b) => b.t - a.t)
+      }));
+      S.ch.forEach(c => { c.real = 0; c.songs = {}; c.ws = []; c.team = ''; c.done = false; c.dl = ''; });
+      S.decided = false; S.rid += 1; S.title = ''; S.airDate = ''; S.win = ''; S.ok = []; S.deadline = ''; S.deadlineMs = 0; S.pub = ''; S.hid = [];
+      if (await pushRound()) { rAdmin(); toast((sv ? '過去の回に保存して、新しい回を始めました' : 'リセットしました') + '。締切を設定してください'); }
+    } catch (e) { fail(e); }
+  },
+  vm: b => { vm = b.dataset.v; rResults(); },
+  vc: b => { vc = +b.dataset.i; rResults(); },
+  vp: b => { vp = b.dataset.n; rResults(); },
+  po: b => { po = +b.dataset.i; pp = ''; pc = 0; rPast(); window.scrollTo(0, 0); },
+  pback: () => { po = -1; rPast(); },
+  pm: b => { pm = b.dataset.v; rPast(); },
+  pc: b => { pc = +b.dataset.i; rPast(); },
+  pq: b => { pp = b.dataset.n; rPast(); }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b && A[b.dataset.a]) A[b.dataset.a](b);
+});
+document.addEventListener('input', e => {
+  const t = e.target, f = t.dataset.f; if (!f) return;
+  const d = mine()[+t.dataset.c];
+  if (f === 's') d.s[t.dataset.l] = t.value;
+  if (f === 'c') d.c = t.value;
+  if (f === 'win') d.win = t.value;
+  if (f === 'tm') d.tm = t.value;
+  if (f === 'ws') { const a = d.ws || []; a[+t.dataset.k] = t.value; for (let j = 0; j < a.length; j++) if (a[j] == null) a[j] = ''; d.ws = a; }
+  save(); markDirty();
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.f === 'r') { mine()[+t.dataset.c].r = +t.value; save(); markDirty(); }
+  if (t.dataset.f === 'win') { mine()[0].win = t.value; save(); markDirty(); }
+  if (t.dataset.f === 'tm') { mine()[+t.dataset.c].tm = t.value; save(); markDirty(); }
+});
+
+// ===== Firestore（全員で共有） =====
+let okRound = false, okPlayers = false, drawn = false;
+function rebuild() {
+  S.pred = {}; S.prof = {};
+  Object.values(P).sort((a, b) => (a.ts || 0) - (b.ts || 0)).forEach(p => {
+    if (p.pred && (p.rid || 0) === S.rid) S.pred[p.name] = p.pred;
+    if (p.bio || p.oshi || p.pred) S.prof[p.name] = { bio: p.bio || '', oshi: p.oshi || '' };
+  });
+}
+function refresh(src) {
+  if (!(okRound && okPlayers)) return;
+  if (!drawn) { drawn = true; R[tabNow](); return; }
+  if (tabNow === 'predict') { if (src === 'round') rPredict(); }
+  else if (tabNow !== 'admin') {
+    if (tabNow === 'db' || tabNow === 'quiz') return;
+    const f = document.activeElement;
+    if (tabNow === 'profile' && f && f.tagName === 'INPUT' && f.closest('#tab-profile')) return;
+    R[tabNow]();
+  }
+}
+const errFn = e => { $('tab-predict').innerHTML = `<p class='text-center text-red-400 py-10'>読み込めませんでした（${esc((e && e.code) || '')}）。Firestoreのルールと設定を確認してください。</p>`; };
+let lastKey = null, online = false;
+setTimeout(() => { if (!online) { $('sync').textContent = '⚠️ サーバーに接続できていません（Firestoreの作成・ルールを確認）'; $('sync').className = 'text-center text-xs text-red-400 mb-3'; } }, 7000);
+onSnapshot(doc(db, 'app', 'round'), { includeMetadataChanges: true }, s => {
+  if (!s.metadata.fromCache) { online = true; if (!authErr) { $('sync').textContent = '☁️ 全員と同期中'; $('sync').className = 'text-center text-xs text-green-400 mb-3'; } }
+  const d = s.data(), key = JSON.stringify(d || null);
+  if (okRound && key === lastKey) return;
+  lastKey = key;
+  if (d) { S.ch = d.ch; S.decided = !!d.decided; S.rid = d.rid || 0; S.title = d.title || ''; S.airDate = d.airDate || ''; S.win = d.win || ''; S.deadline = d.deadline || ''; S.deadlineMs = d.deadlineMs || 0; S.pub = d.pub || ''; S.hid = d.hid || []; S.ok = d.ok || []; }
+  okRound = true; rebuild(); refresh('round');
+}, errFn);
+onSnapshot(collection(db, 'players'), qs => {
+  P = {}; qs.forEach(x => { P[x.id] = x.data(); });
+  okPlayers = true; rebuild(); refresh('players');
+}, errFn);
+onSnapshot(collection(db, 'dbx'), qs => { DBX = qs.docs.map(d => d.data()).filter(x => x && x.ch && x.date).map(x => [x.series || 'r', x.title || '', x.date, x.ch]); dbBuild(); qzBuild(); if (tabNow === 'db' && $('dbbody')) paintDb(); }, () => {});
+onSnapshot(collection(db, 'quiz'), qs => { Q = {}; qs.forEach(d => { Q[d.id] = d.data(); }); if (tabNow === 'quiz') { paintQz(); paintQzRank(); } }, () => {});
+onSnapshot(collection(db, 'past'), qs => {
+  S.past = qs.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.ts || 0) - (b.ts || 0)).map(p => ({
+    id: p.id, ts: p.ts || 0, date: p.date, title: p.title || '', win: p.win || '', ok: p.ok || [], ch: p.ch, rank: p.rank || [],
+    pred: Object.fromEntries((p.players || []).map(x => [x.n, x.d]))
+  }));
+  refresh('past');
+}, errFn);
+
+onAuthStateChanged(authA, u => {
+  const was = admin; admin = !!(u && !u.isAnonymous);
+  if (was === admin) return;
+  if (tabNow === 'admin') rAdmin(); else if (drawn && tabNow === 'results') rResults();
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden && saveState === 'dirty') savePred(false); });
+let lastLock = null;
+setInterval(() => {
+  if (!drawn) return;
+  const lk = locked();
+  if (lastLock !== null && lk !== lastLock && tabNow !== 'admin' && tabNow !== 'quiz' && tabNow !== 'db') R[tabNow]();
+  lastLock = lk;
+}, 20000);
+
+show('predict');
+</script>
+</body>
+</html>
